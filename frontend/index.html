@@ -127,7 +127,7 @@ async function api(p){const r=await fetch(API+p);if(!r.ok)throw new Error(r.stat
 function dd(){document.querySelectorAll('.dd').forEach(el=>{const k=el.dataset.k;
 el.querySelector('.dm').innerHTML=opts[k].map(([v,l])=>`<button data-v="${v}" class="${String(S[k])===String(v)?'on':''}">${l}</button>`).join('');});}
 function chips(){$('#chips').innerHTML=CATS.map(c=>`<button class="chip ${S.cat===c?'on':''}" data-c="${c}">${c}</button>`).join('');}
-const card=g=>`<article class="card"><div class="cv" style="background:${bg(g)}">${img(g)}<span class="ag">${g.age}+</span><span class="sc">${g.score}</span><span class="tt">${esc(g.title)}</span></div><div class="cb"><h3>รีวิว ${esc(g.title)}</h3><p>${esc(g.desc)}</p><div class="mt"><span class="tag">${esc(g.category)}</span><span>👁 <b class="vw" data-vw="${g.id}">${g.views.toLocaleString()}</b></span></div><div class="act"><button class="b1" data-i="${g.id}">📖 อ่านรีวิว</button><button class="b2" data-i="${g.id}" data-j="1">💬 ความคิดเห็น (${g.commentCount})</button></div></div></article>`;
+const card=g=>`<article class="card"><div class="cv" style="background:${bg(g)}">${img(g)}<span class="ag">${g.age}+</span><span class="sc">${g.score}</span><span class="tt">${esc(g.title)}</span></div><div class="cb"><h3>รีวิว ${esc(g.title)}</h3><p>${esc(g.desc)}</p><div class="mt"><span class="tag">${esc(g.category)}</span><span>👁 <b class="vw" data-vw="${g.id}">${g.views.toLocaleString()}</b></span></div><div class="act"><button class="b1" data-i="${g.id}"> อ่านรีวิว</button><button class="b2" data-i="${g.id}" data-j="1"> ความคิดเห็น (${g.commentCount})</button></div></div></article>`;
 async function render(){
 dd();chips();
 const q=S.q.trim();
