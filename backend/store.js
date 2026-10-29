@@ -8,7 +8,7 @@ const path = require("path");
 const FILE = path.join(process.env.DATA_DIR || path.join(__dirname, "data"), "store.json");
 const URL_ = process.env.DATABASE_URL || "";
 const kind = !URL_ ? "file" : /^mysql/i.test(URL_) ? "mysql" : "postgres";
-const state = { games: [], views: {}, comments: [] };
+const state = { games: [], views: {}, comments: [], ratings: {} };
 
 const arr = (x) => { if (Array.isArray(x)) return x; try { return JSON.parse(x || "[]"); } catch (_) { return []; } };
 const toGame = (r) => ({
@@ -50,6 +50,8 @@ function pgAdapter() {
     saveView: (id, n) => pool.query("INSERT INTO views (game_id, count) VALUES ($1, $2) ON CONFLICT (game_id) DO UPDATE SET count = EXCLUDED.count", [id, n]),
     saveComment: (c) => pool.query("INSERT INTO comments (id, game_id, name, text, rating, date) VALUES ($1,$2,$3,$4,$5,$6)", [c.id, c.gameId, c.name, c.text, c.rating, c.date]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = $1", [id]),
+    loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings")).rows.forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
+    saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES ($1,$2,$3) ON CONFLICT (game_id, voter) DO UPDATE SET stars = EXCLUDED.stars, updated_at = now()", [g, v, s]),
   };
 }
 
@@ -86,12 +88,14 @@ function mysqlAdapter() {
     saveView: (id, n) => pool.query("INSERT INTO views (game_id, `count`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `count` = VALUES(`count`)", [id, n]),
     saveComment: (c) => pool.query("INSERT INTO comments (id, game_id, name, `text`, rating, `date`) VALUES (?,?,?,?,?,?)", [c.id, c.gameId, c.name, c.text, c.rating, new Date(c.date)]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = ?", [id]),
+    loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings"))[0].forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
+    saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES (?,?,?) ON DUPLICATE KEY UPDATE stars = VALUES(stars)", [g, v, s]),
   };
 }
 
 const db = kind === "postgres" ? pgAdapter() : kind === "mysql" ? mysqlAdapter() : null;
 const fileSave = () => {
-  try { fs.writeFileSync(FILE, JSON.stringify({ views: state.views, comments: state.comments })); }
+  try { fs.writeFileSync(FILE, JSON.stringify({ views: state.views, comments: state.comments, ratings: state.ratings })); }
   catch (e) { console.error("save failed:", e.message); }
 };
 const safe = (p) => p.catch((e) => console.error("db error:", e.message));
@@ -105,6 +109,7 @@ async function init() {
     await refreshGames();
     state.views = await db.loadViews();
     state.comments = await db.loadComments();
+    state.ratings = await db.loadRatings();
   } else {
     state.games = seed;
     try { Object.assign(state, JSON.parse(fs.readFileSync(FILE, "utf8"))); } catch (_) {}
@@ -115,5 +120,6 @@ async function init() {
 const persistView = (id) => db ? safe(db.saveView(id, state.views[id])) : fileSave();
 const persistComment = (c) => db ? safe(db.saveComment(c)) : fileSave();
 const persistDelete = (id) => db ? safe(db.deleteComment(id)) : fileSave();
+const persistRating = (g, v, s) => db ? safe(db.saveRating(g, v, s)) : fileSave();
 
-module.exports = { state, init, refreshGames, persistView, persistComment, persistDelete };
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating };

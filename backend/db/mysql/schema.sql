@@ -40,3 +40,14 @@ CREATE TABLE IF NOT EXISTS comments (
   CONSTRAINT comments_game_fk FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE,
   CONSTRAINT comments_rating_chk CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ดาวที่ผู้อ่านให้ (1 เบราว์เซอร์ต่อ 1 เกม เปลี่ยนดาวได้) ใช้คำนวณคะแนนรวม
+CREATE TABLE IF NOT EXISTS ratings (
+  game_id    INT         NOT NULL,
+  voter      VARCHAR(64) NOT NULL,
+  stars      INT         NOT NULL,
+  updated_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (game_id, voter),
+  CONSTRAINT ratings_game_fk FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE,
+  CONSTRAINT ratings_stars_chk CHECK (stars BETWEEN 1 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

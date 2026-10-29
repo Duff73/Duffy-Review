@@ -38,3 +38,12 @@ CREATE TABLE IF NOT EXISTS comments (
   date    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS comments_game_idx ON comments (game_id, date DESC);
+
+-- ดาวที่ผู้อ่านให้ (1 เบราว์เซอร์ต่อ 1 เกม เปลี่ยนดาวได้) ใช้คำนวณคะแนนรวม
+CREATE TABLE IF NOT EXISTS ratings (
+  game_id    INT  NOT NULL REFERENCES games (id) ON DELETE CASCADE,
+  voter      TEXT NOT NULL,
+  stars      INT  NOT NULL CHECK (stars BETWEEN 1 AND 5),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (game_id, voter)
+);

@@ -15,16 +15,21 @@ app.use(cors({ origin: origins.includes("*") ? true : origins }));
 const VIEW_COOLDOWN = (Number(process.env.VIEW_COOLDOWN_SEC) || 60) * 1000;
 
 const viewsOf = (g) => (g.views || 0) + (state.views[g.id] || 0);
-function stats(id) {
-  const c = state.comments.filter((x) => x.gameId === id);
-  const r = c.filter((x) => x.rating);
+// คะแนนรวม = (คะแนนทีมงาน x PRIOR + ดาวผู้อ่านทุกดวง x 2) / (PRIOR + จำนวนผู้โหวต)
+// คือนับคะแนนทีมงานเหมือนมีผู้โหวต PRIOR คน (ดาว 1-5 คูณ 2 ให้เป็นสเกล 10) ปรับได้ด้วย SCORE_PRIOR_WEIGHT
+const PRIOR = Number(process.env.SCORE_PRIOR_WEIGHT) || 10;
+function stats(g) {
+  const r = Object.values(state.ratings[g.id] || {});
+  const sum = r.reduce((s, x) => s + x, 0);
   return {
-    commentCount: c.length,
+    commentCount: state.comments.filter((x) => x.gameId === g.id).length,
+    editorScore: g.score,
     readerVotes: r.length,
-    readerRating: r.length ? +(r.reduce((s, x) => s + x.rating, 0) / r.length).toFixed(1) : null,
+    readerRating: r.length ? +(sum / r.length).toFixed(1) : null,
+    score: +((g.score * PRIOR + sum * 2) / (PRIOR + r.length)).toFixed(1),
   };
 }
-const decorate = (g) => ({ ...g, views: viewsOf(g), ...stats(g.id) });
+const decorate = (g) => ({ ...g, views: viewsOf(g), ...stats(g) });
 
 // จำกัดการส่งคอมเมนต์ และกันนับวิวซ้ำจากคนเดิมในเวลาสั้นๆ
 const hits = new Map();
@@ -35,6 +40,14 @@ setInterval(() => {
   for (const [k, t] of vhits) if (now - t > VIEW_COOLDOWN) vhits.delete(k);
 }, 600000).unref();
 
+const rhits = new Map();
+function rlimiter(req, res, next) {
+  const now = Date.now();
+  const a = (rhits.get(req.ip) || []).filter((t) => now - t < 60000);
+  if (a.length >= 20) return res.status(429).json({ error: "โหวตถี่เกินไป กรุณารอสักครู่" });
+  a.push(now); rhits.set(req.ip, a); next();
+}
+
 function limiter(req, res, next) {
   const now = Date.now();
   const a = (hits.get(req.ip) || []).filter((t) => now - t < 60000);
@@ -43,7 +56,9 @@ function limiter(req, res, next) {
 }
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok" }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "rating-v1", storage: store.kind, games: state.games.length }));
+// ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
+app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
 app.get("/api/meta", (_, res) => {
   const n = {};
@@ -74,11 +89,29 @@ app.get("/api/games", (req, res) => {
   res.json({ total: items.length, items });
 });
 
-app.get("/api/top", (_, res) => res.json([...state.games].sort((a, b) => b.score - a.score).slice(0, 10).map(decorate)));
+app.get("/api/top", (_, res) => res.json(state.games.map(decorate).sort((a, b) => b.score - a.score).slice(0, 10)));
 
 app.get("/api/games/:id", (req, res) => {
   const g = state.games.find((x) => x.id === Number(req.params.id));
-  g ? res.json(decorate(g)) : res.status(404).json({ error: "ไม่พบเกมนี้" });
+  if (!g) return res.status(404).json({ error: "ไม่พบเกมนี้" });
+  const d = decorate(g);
+  d.myRating = (state.ratings[g.id] || {})[String(req.query.voter || "")] || null; // ดาวที่เครื่องนี้เคยให้
+  res.json(d);
+});
+
+// ให้ดาว 1-5 (1 เครื่อง/เบราว์เซอร์ ต่อ 1 เกม กดใหม่คือเปลี่ยนดาว) แล้วคำนวณคะแนนรวมใหม่
+app.post("/api/games/:id/rate", rlimiter, (req, res) => {
+  const id = Number(req.params.id);
+  const g = state.games.find((x) => x.id === id);
+  if (!g) return res.status(404).json({ error: "ไม่พบเกมนี้" });
+  const voter = String((req.body || {}).voter || "");
+  const stars = Number((req.body || {}).stars);
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(voter)) return res.status(400).json({ error: "voter ไม่ถูกต้อง" });
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) return res.status(400).json({ error: "ดาวต้องเป็น 1–5" });
+  if (!state.ratings[id]) state.ratings[id] = {};
+  state.ratings[id][voter] = stars;
+  store.persistRating(id, voter, stars);
+  res.json({ ...stats(g), myRating: stars });
 });
 
 // นับยอดเข้าชม: เรียกทุกครั้งที่มีคนเปิดหน้ารีวิว (คนเดิม+เกมเดิม ภายใน VIEW_COOLDOWN_SEC วินาที นับครั้งเดียว)
@@ -107,7 +140,7 @@ app.post("/api/games/:id/comments", limiter, (req, res) => {
   const b = req.body || {};
   const name = String(b.name || "").trim();
   const text = String(b.text || "").trim();
-  const rating = b.rating ? Number(b.rating) : null;
+  const rating = null; // ดาวให้ผ่าน /rate แล้ว ไม่รับดาวในคอมเมนต์
   if (name.length < 1 || name.length > 30) return res.status(400).json({ error: "กรุณาใส่ชื่อ (ไม่เกิน 30 ตัวอักษร)" });
   if (text.length < 2 || text.length > 500) return res.status(400).json({ error: "ความคิดเห็นต้องยาว 2–500 ตัวอักษร" });
   if (rating !== null && !(Number.isInteger(rating) && rating >= 1 && rating <= 5)) return res.status(400).json({ error: "คะแนนต้องเป็น 1–5" });
