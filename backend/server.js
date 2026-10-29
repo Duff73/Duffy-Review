@@ -12,8 +12,6 @@ app.use(express.json({ limit: "10kb" }));
 const origins = (process.env.CORS_ORIGIN || "*").split(",").map((s) => s.trim()).filter(Boolean);
 app.use(cors({ origin: origins.includes("*") ? true : origins }));
 
-const CATEGORIES = ["แอคชัน", "RPG", "ผจญภัย", "แข่งรถ", "จำลอง", "ต่อสู้"];
-const AGES = [3, 7, 12, 16, 18];
 const VIEW_COOLDOWN = (Number(process.env.VIEW_COOLDOWN_SEC) || 60) * 1000;
 
 const viewsOf = (g) => (g.views || 0) + (state.views[g.id] || 0);
@@ -46,7 +44,16 @@ function limiter(req, res, next) {
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
-app.get("/api/meta", (_, res) => res.json({ categories: CATEGORIES, ages: AGES, sorts: ["new", "pop", "score"] }));
+// หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
+app.get("/api/meta", (_, res) => {
+  const n = {};
+  state.games.forEach((g) => { n[g.category] = (n[g.category] || 0) + 1; });
+  res.json({
+    categories: Object.keys(n).sort((a, b) => n[b] - n[a]),
+    ages: [...new Set(state.games.map((g) => g.age))].sort((a, b) => a - b),
+    sorts: ["new", "pop", "score"],
+  });
+});
 
 app.get("/api/games", (req, res) => {
   const q = String(req.query.q || "").trim().toLowerCase();
