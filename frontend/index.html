@@ -156,7 +156,7 @@ return `<div class="cv big" style="background:${bg(g)}">${img(g)}<span class="ag
 <h2>รีวิว ${esc(g.title)}</h2>${paras}
 <div class="pc"><div><h4>จุดเด่น</h4><ul>${li(g.pros)}</ul></div><div><h4>จุดด้อย</h4><ul>${li(g.cons)}</ul></div></div>
 <div class="rate"><div id="rsum">${sumHtml(g)}</div><div class="rstars" id="rstars">${[1,2,3,4,5].map(n=>`<button class="rb ${n<=(g.myRating||0)?'on':''}" data-r="${n}" aria-label="${n} ดาว">★</button>`).join('')}</div><small id="rmsg" class="mu">${g.myRating?`คะแนนของคุณ: ${g.myRating} ดาว (กดดาวอื่นเพื่อเปลี่ยน)`:'กดดาวเพื่อให้คะแนนเกมนี้'}</small></div>
-<h3 id="cm">💬 ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)</h3>
+<h3 id="cm"> ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)</h3>
 <div class="cf"><input id="cn" maxlength="30" placeholder="ชื่อของคุณ"><textarea id="ct" maxlength="500" rows="3" placeholder="แสดงความคิดเห็นเกี่ยวกับเกมนี้..."></textarea><button class="send">ส่งความคิดเห็น</button><span id="cmsg"></span></div>
 <div id="clist"></div><button class="x">ปิด</button></div>`;}
 async function loadComments(id){
@@ -168,7 +168,7 @@ const name=$('#cn').value.trim(),text=$('#ct').value.trim(),m=$('#cmsg');
 m.textContent='กำลังส่ง...';
 try{const r=await fetch(`${API}/api/games/${cur.id}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,text})});
 const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);
-$('#ct').value='';m.textContent='ส่งความคิดเห็นแล้ว ขอบคุณครับ 🎉';
+$('#ct').value='';m.textContent='ส่งความคิดเห็นแล้ว ขอบคุณครับ ';
 try{localStorage.setItem('duffy-name',name)}catch(_){}
 loadComments(cur.id);render();
 }catch(e){m.textContent='ส่งไม่สำเร็จ: '+e.message;}}
