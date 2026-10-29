@@ -88,7 +88,7 @@ footer{border-top:1px solid var(--bd);text-align:center;padding:22px;color:var(-
 <header><div class="bar">
 <button class="logo" id="home" aria-label="หน้าแรก"><i>D</i><span>Duffy <b>Review</b></span></button>
 <nav>
-<button class="nb on" id="homeBtn">🏠 หน้าแรก</button>
+<button class="nb on" id="homeBtn">หน้าแรก</button>
 <div class="dd" data-k="cat"><button class="nb">หมวดหมู่เกม ▾</button><div class="dm"></div></div>
 <div class="dd" data-k="age"><button class="nb">หมวดหมู่อายุ ▾</button><div class="dm"></div></div>
 <div class="dd" data-k="sort"><button class="nb">ความนิยม ▾</button><div class="dm"></div></div>
@@ -102,7 +102,7 @@ footer{border-top:1px solid var(--bd);text-align:center;padding:22px;color:var(-
 <div class="info"><h2 id="ttl">รีวิวล่าสุด</h2><span><span id="cnt"></span> <button class="clear" id="clr">ล้างตัวกรอง</button></span></div>
 <div class="grid" id="grid"></div>
 </div>
-<aside><div class="box"><h2>🔥 Top 10 ยอดนิยม</h2><div id="top"></div></div></aside></div>
+<aside><div class="box"><h2>Top 10 ยอดนิยม</h2><div id="top"></div></div></aside></div>
 </main>
 <footer>© 2026 Duffy Review · ข้อมูลรีวิวเป็นข้อมูลตัวอย่าง</footer>
 <div class="modal" id="md"><div class="mb" id="mb"></div></div>
@@ -140,7 +140,7 @@ try{
 const r=await api('/api/games?'+new URLSearchParams({q,cat:S.cat,age:S.age,sort:S.sort}));
 if(my!==seq)return;first=false;
 $('#cnt').textContent=r.total+" รายการ";
-$('#grid').innerHTML=r.items.length?r.items.map(card).join(''):'<div class="empty">😕 ไม่พบรีวิวที่ตรงกับการค้นหา<br>ลองใช้คำอื่น หรือล้างตัวกรอง</div>';
+$('#grid').innerHTML=r.items.length?r.items.map(card).join(''):'<div class="empty">ไม่พบรีวิวที่ตรงกับการค้นหา<br>ลองใช้คำอื่น หรือล้างตัวกรอง</div>';
 }catch(e){if(my!==seq)return;$('#cnt').textContent="";$('#grid').innerHTML='<div class="empty">⚠️ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้<br>ตรวจสอบค่า API URL ในไฟล์ config.js</div>';}
 }
 async function loadTop(){try{const t=await api('/api/top');$('#top').innerHTML=t.map((g,i)=>`<button class="tp" data-i="${g.id}"><span class="rk">${i+1}</span><span class="n">${esc(g.title)}</span><b>${g.score}</b></button>`).join('');}catch(e){$('#top').innerHTML='<small>โหลดไม่สำเร็จ</small>';}}
@@ -149,10 +149,10 @@ const paras=(g.review||g.desc).split(/\n\n/).map(p=>`<p>${esc(p)}</p>`).join('')
 const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
 const opt=[5,4,3,2,1].map(n=>`<option value="${n}">${stars(n)}</option>`).join('');
 return `<div class="cv big" style="background:${bg(g)}">${img(g)}<span class="ag">${g.age}+</span><span class="sc">${g.score}</span><span class="tt">${esc(g.title)}</span></div>
-<div class="cb dt"><div class="mt"><span class="tag">${esc(g.category)}</span><span>🎮 ${esc(g.platforms)}</span><span>👁 <b class="vw" data-vw="${g.id}">${g.views.toLocaleString()}</b></span></div>
+<div class="cb dt"><div class="mt"><span class="tag">${esc(g.category)}</span><span> ${esc(g.platforms)}</span><span>👁 <b class="vw" data-vw="${g.id}">${g.views.toLocaleString()}</b></span></div>
 <h2>รีวิว ${esc(g.title)}</h2>${paras}
-<div class="pc"><div><h4>👍 จุดเด่น</h4><ul>${li(g.pros)}</ul></div><div><h4>👎 จุดด้อย</h4><ul>${li(g.cons)}</ul></div></div>
-<h3 id="cm">💬 ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)${g.readerRating?` · คะแนนผู้อ่าน ★ ${g.readerRating} (${g.readerVotes} โหวต)`:''}</h3>
+<div class="pc"><div><h4>จุดเด่น</h4><ul>${li(g.pros)}</ul></div><div><h4> จุดด้อย</h4><ul>${li(g.cons)}</ul></div></div>
+<h3 id="cm"> ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)${g.readerRating?` · คะแนนผู้อ่าน ★ ${g.readerRating} (${g.readerVotes} โหวต)`:''}</h3>
 <div class="cf"><input id="cn" maxlength="30" placeholder="ชื่อของคุณ"><select id="cr"><option value="">ให้คะแนน (ไม่บังคับ)</option>${opt}</select><textarea id="ct" maxlength="500" rows="3" placeholder="แสดงความคิดเห็นเกี่ยวกับเกมนี้..."></textarea><button class="send">ส่งความคิดเห็น</button><span id="cmsg"></span></div>
 <div id="clist"></div><button class="x">ปิด</button></div>`;}
 async function loadComments(id){
@@ -164,7 +164,7 @@ const name=$('#cn').value.trim(),text=$('#ct').value.trim(),rating=+$('#cr').val
 m.textContent='กำลังส่ง...';
 try{const r=await fetch(`${API}/api/games/${cur.id}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,text,rating})});
 const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);
-$('#ct').value='';m.textContent='ส่งความคิดเห็นแล้ว ขอบคุณครับ 🎉';
+$('#ct').value='';m.textContent='ส่งความคิดเห็นแล้ว ขอบคุณครับ ';
 try{localStorage.setItem('duffy-name',name)}catch(_){}
 loadComments(cur.id);render();
 }catch(e){m.textContent='ส่งไม่สำเร็จ: '+e.message;}}
