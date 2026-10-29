@@ -13,7 +13,7 @@ app.use(express.json({ limit: "10kb" }));
 const origins = (process.env.CORS_ORIGIN || "*").split(",").map((s) => s.trim()).filter(Boolean);
 app.use(cors({ origin: origins.includes("*") ? true : origins }));
 
-const CATEGORIES = ["แอคชัน", "RPG", "ผจญภัย", "แข่งรถ", "จำลอง", "ต่อสู้"];
+const CATEGORIES = ["แอคชัน", "RPG", "ผจญภัย", "แข่งรถ", "จำลอง", "ต่อสู้", "สยองขวัญ"];
 const AGES = [3, 7, 12, 16, 18];
 
 // ---------- ความคิดเห็น (เก็บในไฟล์ JSON) ----------
