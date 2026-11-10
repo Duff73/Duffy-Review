@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ผู้ดูแล | Duffy Review</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f6fa;--sf:#fff;--tx:#14182b;--mu:#667085;--bd:#e3e6ef;--ac:#ff6a2b;--ac2:#7c4dff;--ok:#12a150;--er:#e5484d;--sh:0 4px 18px rgba(20,24,43,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1120;--sf:#171b2e;--tx:#eef0f8;--mu:#9aa3bd;--bd:#2a3050;--sh:0 4px 18px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1120;--sf:#171b2e;--tx:#eef0f8;--mu:#9aa3bd;--bd:#2a3050;--sh:0 4px 18px rgba(0,0,0,.4);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:'Prompt',system-ui,'Noto Sans Thai',sans-serif;line-height:1.5}
+a{color:inherit}button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-size:14px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);border-color:transparent}
+textarea{resize:vertical}
+label{display:grid;gap:4px;font-size:13px;font-weight:500;color:var(--mu)}
+label small{font-weight:400}
+.btn{border:1px solid var(--bd);background:var(--sf);border-radius:10px;padding:8px 14px;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--mu)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:500}
+.btn.pri:hover{filter:brightness(1.05)}
+.btn.dan{color:var(--er)}.btn.dan:hover{border-color:var(--er)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.6;cursor:wait}
+.logo{font-weight:700;font-size:20px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo i{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;color:#fff;font-style:normal;font-size:16px}
+.logo b{color:var(--ac)}
+.hide{display:none!important}
+.mu{color:var(--mu)}
+.msg{font-size:13px;min-height:20px}.msg.er{color:var(--er)}.msg.ok{color:var(--ok)}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.lbox{background:var(--sf);border:1px solid var(--bd);border-radius:18px;box-shadow:var(--sh);padding:28px;width:100%;max-width:380px;display:grid;gap:14px}
+.lbox h1{margin:0;font-size:22px}.lbox p{margin:-8px 0 0;font-size:14px}
+.lbox .btn{padding:10px}
+
+/* ---------- app ---------- */
+header{position:sticky;top:0;z-index:20;background:var(--sf);border-bottom:1px solid var(--bd)}
+.bar{max-width:1180px;margin:auto;display:flex;align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap}
+.bar .sp{flex:1}
+.who{font-size:13px;color:var(--mu)}
+.tabs{display:flex;gap:4px}
+.tab{background:none;border:0;padding:8px 12px;border-radius:10px;font-size:14px;font-weight:500;color:var(--mu)}
+.tab:hover,.tab.on{background:var(--bg);color:var(--tx)}
+main{max-width:1180px;margin:auto;padding:20px 16px 48px}
+.tool{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tool h2{margin:0;font-size:20px;margin-right:auto}
+.tool input{max-width:260px}
+.list{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:center;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:10px}
+.th{width:96px;height:54px;border-radius:9px;overflow:hidden;position:relative;flex:none}
+.th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.row h3{margin:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-size:12px;color:var(--mu);display:flex;gap:10px;flex-wrap:wrap}
+.row .meta b{color:var(--ac)}
+.row .acts{display:flex;gap:6px}
+.row>div{min-width:0}
+@media(max-width:600px){.row{grid-template-columns:72px 1fr}.th{width:72px;height:44px}.row .acts{grid-column:1/-1;justify-content:flex-end}}
+.empty{text-align:center;padding:50px 10px;color:var(--mu)}
+.cm{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+.cm>div{flex:1;min-width:0}
+.cm p{margin:4px 0 0;white-space:pre-wrap;word-break:break-word;font-size:14px}
+.cm .meta{font-size:12px;color:var(--mu)}
+.cm .meta b{color:var(--tx)}
+
+/* ---------- editor ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:50;overflow:auto;padding:16px}
+.modal.show{display:block}
+.ed{background:var(--sf);border-radius:18px;max-width:860px;margin:3vh auto;box-shadow:var(--sh)}
+.edh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--bd)}
+.edh h2{margin:0;font-size:18px;flex:1}
+.edb{padding:18px 20px;display:grid;gap:14px}
+.g2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g2 .w2{grid-column:span 2}.g2 .w4{grid-column:1/-1}
+@media(max-width:640px){.g2{grid-template-columns:1fr 1fr}}
+.pv{height:170px;border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:700;font-size:18px}
+.pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pv::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(0,0,0,.7))}
+.pv span{position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.pv .sc{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:10px;font-size:16px}
+.pv .ag{position:absolute;top:10px;left:10px;background:#fff;color:#111;padding:1px 8px;border-radius:7px;font-size:12px;text-shadow:none}
+input[type=range]{padding:0;accent-color:var(--ac)}
+.edf{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--bd);position:sticky;bottom:0;background:var(--sf);border-radius:0 0 18px 18px}
+.edf .msg{flex:1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;z-index:99;box-shadow:var(--sh);opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ===== หน้าเข้าสู่ระบบ ===== -->
+<section id="login" class="hide">
+<form class="lbox" id="lform" autocomplete="on">
+<a class="logo" href="./"><i>D</i><span>Duffy <b>Review</b></span></a>
+<h1>เข้าสู่ระบบผู้ดูแล</h1>
+<p class="mu">สำหรับเพิ่มและแก้ไขรีวิวเกม</p>
+<label>ชื่อผู้ใช้<input id="lu" name="username" autocomplete="username" required></label>
+<label>รหัสผ่าน<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+<button class="btn pri" id="lbtn">เข้าสู่ระบบ</button>
+<div class="msg er" id="lmsg"></div>
+</form>
+</section>
+
+<!-- ===== หน้าจัดการ ===== -->
+<div id="app" class="hide">
+<header><div class="bar">
+<a class="logo" href="./" title="ไปหน้าเว็บ"><i>D</i><span>Duffy <b>Review</b></span></a>
+<nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น</button><button class="tab" data-tab="users">สมาชิก</button></nav>
+<span class="sp"></span>
+<span class="who" id="who"></span>
+<a class="btn sm" href="./" target="_blank" rel="noopener">ดูหน้าเว็บ</a>
+<button class="btn sm" id="logout">ออกจากระบบ</button>
+</div></header>
+<main>
+<section id="tab-games">
+<div class="tool"><h2>รีวิวเกมทั้งหมด <small class="mu" id="gcount"></small></h2><input id="gq" type="search" placeholder="ค้นหาชื่อเกม / หมวด..."><button class="btn pri" id="add">+ เพิ่มรีวิวใหม่</button></div>
+<div class="list" id="glist"></div>
+</section>
+<section id="tab-comments" class="hide">
+<div class="tool"><h2>ความคิดเห็นล่าสุด <small class="mu" id="ccount"></small></h2><input id="cq" type="search" placeholder="ค้นหาข้อความ / ชื่อ / เกม..."></div>
+<div class="list" id="clist"></div>
+</section>
+<section id="tab-users" class="hide">
+<div class="tool"><h2>สมาชิกทั้งหมด <small class="mu" id="ucount"></small></h2><input id="uq" type="search" placeholder="ค้นหาชื่อผู้ใช้ / ชื่อที่แสดง..."></div>
+<div class="list" id="ulist"></div>
+</section>
+</main>
+</div>
+
+<!-- ===== ฟอร์มเพิ่ม/แก้ไข ===== -->
+<div class="modal" id="md"><form class="ed" id="ef" novalidate>
+<div class="edh"><h2 id="etitle">เพิ่มรีวิวใหม่</h2><button type="button" class="btn sm" data-close>ปิด</button></div>
+<div class="edb">
+<div class="pv" id="pv"></div>
+<div class="g2">
+<label class="w2">ชื่อเกม *<input name="title" maxlength="200" required></label>
+<label>หมวดหมู่ *<input name="category" maxlength="50" list="cats" required></label>
+<label>เรตอายุ *<select name="age"><option value="3">3+ ทุกวัย</option><option value="7">7+</option><option value="12">12+</option><option value="16">16+</option><option value="18">18+</option></select></label>
+<label>คะแนนทีมงาน (0–10) *<input name="score" type="number" min="0" max="10" step="0.1" required></label>
+<label>วันที่ลงรีวิว<input name="date" type="date"></label>
+<label>แพลตฟอร์ม<input name="platforms" maxlength="200" placeholder="PS5 · PC"></label>
+<label>ยอดวิวตั้งต้น<input name="views" type="number" min="0" step="1"></label>
+<label class="w4">รูปปก <small>ลิงก์ https://... หรือ images/ชื่อไฟล์.jpg (แนะนำ 16:9)</small><input name="image" maxlength="500" placeholder="images/ชื่อไฟล์.jpg"></label>
+<label class="w4">สีพื้นหลังสำรอง (เมื่อไม่มีรูป)<input name="hue" type="range" min="0" max="360"></label>
+<label class="w4">คำอธิบายสั้น (บนการ์ด)<input name="desc" maxlength="1000"></label>
+<label class="w4">เนื้อรีวิวเต็ม <small>เว้นบรรทัดว่างเพื่อขึ้นย่อหน้าใหม่</small><textarea name="review" rows="9"></textarea></label>
+<label class="w2">จุดเด่น <small>บรรทัดละ 1 ข้อ</small><textarea name="pros" rows="4"></textarea></label>
+<label class="w2">จุดด้อย <small>บรรทัดละ 1 ข้อ</small><textarea name="cons" rows="4"></textarea></label>
+</div>
+</div>
+<div class="edf"><span class="msg" id="emsg"></span><button type="button" class="btn" data-close>ยกเลิก</button><button class="btn pri" id="esave">บันทึก</button></div>
+</form></div>
+<datalist id="cats"></datalist>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
+const KEY="duffy-admin";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const imgUrl=s=>/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s);
+const bg=h=>`linear-gradient(135deg,hsl(${h},70%,45%),hsl(${(+h+60)%360},65%,30%))`;
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+let session=null,games=[],comments=[],editing=null,dirty=false;
+try{session=JSON.parse(localStorage.getItem(KEY)||"null")}catch(_){}
+
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2600);}
+function save(s){session=s;try{s?localStorage.setItem(KEY,JSON.stringify(s)):localStorage.removeItem(KEY)}catch(_){}}
+
+// เรียก API พร้อมโทเคน ถ้าโทเคนหมดอายุจะเด้งกลับหน้าเข้าสู่ระบบ
+async function api(path,opt={}){
+  const h={'Content-Type':'application/json'};if(session)h.Authorization='Bearer '+session.token;
+  const r=await fetch(API+path,{...opt,headers:h,body:opt.body&&JSON.stringify(opt.body)});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401&&!path.endsWith('/login')){save(null);show('login');$('#lmsg').textContent='เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';throw new Error('unauthorized');}
+  if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+  return d;
+}
+
+function show(v){$('#login').classList.toggle('hide',v!=='login');$('#app').classList.toggle('hide',v!=='app');if(v==='login')setTimeout(()=>$('#lu').focus(),0);}
+
+// ---------- login / logout ----------
+$('#lform').onsubmit=async e=>{
+  e.preventDefault();const b=$('#lbtn'),m=$('#lmsg');b.disabled=true;m.textContent='';
+  try{const d=await api('/api/admin/login',{method:'POST',body:{username:$('#lu').value.trim(),password:$('#lp').value}});
+    save({token:d.token,user:d.user});$('#lp').value='';start();}
+  catch(err){m.textContent=err.message==='Failed to fetch'?'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (ตรวจสอบ config.js)':err.message;}
+  finally{b.disabled=false;}
+};
+$('#logout').onclick=async()=>{
+  if(dirty&&!confirm('มีการแก้ไขที่ยังไม่บันทึก ออกจากระบบเลยหรือไม่?'))return;
+  try{await api('/api/admin/logout',{method:'POST'})}catch(_){}
+  save(null);closeEd(true);games=[];comments=[];show('login');$('#lmsg').textContent='';toast('ออกจากระบบแล้ว');
+};
+
+async function start(){
+  show('app');$('#who').textContent='ผู้ใช้: '+session.user;
+  await Promise.all([loadGames(),loadComments()]).catch(()=>{});
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  $('#tab-games').classList.toggle('hide',t.dataset.tab!=='games');
+  $('#tab-comments').classList.toggle('hide',t.dataset.tab!=='comments');
+  $('#tab-users').classList.toggle('hide',t.dataset.tab!=='users');
+  if(t.dataset.tab==='comments')loadComments().catch(()=>{});
+  if(t.dataset.tab==='users')loadUsers();
+});
+
+// ---------- games ----------
+async function loadGames(){
+  $('#glist').innerHTML='<div class="empty">กำลังโหลด...</div>';
+  try{games=await api('/api/admin/games');renderGames();
+    $('#cats').innerHTML=[...new Set(games.map(g=>g.category))].map(c=>`<option value="${esc(c)}">`).join('');}
+  catch(e){if(e.message!=='unauthorized')$('#glist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;}
+}
+function renderGames(){
+  const q=$('#gq').value.trim().toLowerCase();
+  const a=games.filter(g=>!q||`${g.title} ${g.category} ${g.platforms}`.toLowerCase().includes(q));
+  $('#gcount').textContent=`(${games.length})`;
+  $('#glist').innerHTML=a.length?a.map(g=>`<div class="row">
+<div class="th" style="background:${bg(g.hue)}">${g.image?`<img src="${esc(imgUrl(g.image))}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
+<div><h3>${esc(g.title)}</h3><div class="meta"><span>${esc(g.category)}</span><span>${g.age}+</span><span>ทีมงาน <b>${g.editorScore}</b> · รวม ${g.score}</span><span>วิว ${g.totalViews.toLocaleString()}</span><span>ความคิดเห็น ${g.commentCount}</span><span>${esc(g.date)}</span></div></div>
+<div class="acts"><a class="btn sm" href="./#game-${g.id}" target="_blank" rel="noopener" title="ดูบนหน้าเว็บ">ดู</a><button class="btn sm" data-edit="${g.id}">แก้ไข</button><button class="btn sm dan" data-del="${g.id}">ลบ</button></div></div>`).join('')
+  :`<div class="empty">${games.length?'ไม่พบเกมที่ค้นหา':'ยังไม่มีรีวิว กด “+ เพิ่มรีวิวใหม่” เพื่อเริ่ม'}</div>`;
+}
+$('#gq').oninput=renderGames;
+$('#glist').onclick=async e=>{
+  const ed=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]');
+  if(ed)openEd(games.find(g=>g.id===+ed.dataset.edit));
+  if(del){const g=games.find(x=>x.id===+del.dataset.del);
+    if(!confirm(`ลบรีวิว “${g.title}” ?\nยอดวิว ความคิดเห็น และดาวของเกมนี้จะถูกลบด้วย และกู้คืนไม่ได้`))return;
+    del.disabled=true;
+    try{await api('/api/admin/games/'+g.id,{method:'DELETE'});toast('ลบ “'+g.title+'” แล้ว');loadGames();loadComments().catch(()=>{});}
+    catch(err){del.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}}
+};
+
+// ---------- editor ----------
+const F=n=>$('#ef').elements[n];
+function openEd(g){
+  editing=g||null;
+  $('#etitle').textContent=g?'แก้ไขรีวิว':'เพิ่มรีวิวใหม่';
+  const v=g?{...g,score:g.editorScore,pros:(g.pros||[]).join('\n'),cons:(g.cons||[]).join('\n')}
+    :{title:'',category:'',age:12,score:8,date:today(),platforms:'',views:0,image:'',hue:Math.floor(Math.random()*360),desc:'',review:'',pros:'',cons:''};
+  for(const k of ['title','category','age','score','date','platforms','views','image','hue','desc','review','pros','cons'])F(k).value=v[k]??'';
+  $('#emsg').textContent='';$('#emsg').className='msg';dirty=false;preview();
+  $('#md').classList.add('show');document.body.style.overflow='hidden';setTimeout(()=>F('title').focus(),0);
+}
+function closeEd(force){
+  if(!force&&dirty&&!confirm('ยังไม่ได้บันทึกการแก้ไข ปิดหน้านี้เลยหรือไม่?'))return;
+  $('#md').classList.remove('show');document.body.style.overflow='';dirty=false;editing=null;
+}
+function preview(){
+  const t=F('title').value||'ชื่อเกม',im=F('image').value.trim(),h=F('hue').value;
+  $('#pv').style.background=bg(h);
+  $('#pv').innerHTML=`${im?`<img src="${esc(imgUrl(im))}" alt="" onerror="this.remove()">`:''}<span class="ag">${esc(F('age').value)}+</span><span class="sc">${esc(F('score').value||'-')}</span><span>${esc(t)}</span>`;
+}
+$('#ef').oninput=e=>{dirty=true;if(['title','image','hue','age','score'].includes(e.target.name))preview();};
+$('#md').onclick=e=>{if(e.target.id==='md'||e.target.closest('[data-close]'))closeEd();};
+$('#add').onclick=()=>openEd(null);
+$('#ef').onsubmit=async e=>{
+  e.preventDefault();
+  const m=$('#emsg'),b=$('#esave');
+  const body={};for(const k of ['title','category','age','score','date','platforms','views','image','hue','desc','review','pros','cons'])body[k]=F(k).value;
+  if(!body.title.trim()){m.className='msg er';m.textContent='กรุณาใส่ชื่อเกม';F('title').focus();return;}
+  if(!body.category.trim()){m.className='msg er';m.textContent='กรุณาใส่หมวดหมู่';F('category').focus();return;}
+  b.disabled=true;m.className='msg';m.textContent='กำลังบันทึก...';
+  try{
+    const g=editing?await api('/api/admin/games/'+editing.id,{method:'PUT',body}):await api('/api/admin/games',{method:'POST',body});
+    toast((editing?'บันทึกการแก้ไข “':'เพิ่มรีวิว “')+g.title+'” แล้ว');closeEd(true);loadGames();
+  }catch(err){if(err.message!=='unauthorized'){m.className='msg er';m.textContent=err.message;}}
+  finally{b.disabled=false;}
+};
+
+// ---------- comments ----------
+async function loadComments(){
+  try{comments=await api('/api/admin/comments');renderComments();}
+  catch(e){if(e.message!=='unauthorized')$('#clist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;throw e;}
+}
+function renderComments(){
+  const q=$('#cq').value.trim().toLowerCase();
+  const a=comments.filter(c=>!q||`${c.name} ${c.text} ${c.gameTitle}`.toLowerCase().includes(q));
+  $('#ccount').textContent=`(${comments.length})`;
+  $('#clist').innerHTML=a.length?a.map(c=>`<div class="cm"><div><div class="meta"><b>${esc(c.name)}</b>${c.userId?' (สมาชิก)':' (ผู้เยี่ยมชม)'} · ${esc(c.gameTitle)} · ${new Date(c.date).toLocaleString('th-TH')}</div><p>${esc(c.text)}</p></div><button class="btn sm dan" data-cdel="${esc(c.id)}">ลบ</button></div>`).join('')
+  :'<div class="empty">ไม่มีความคิดเห็น</div>';
+}
+$('#cq').oninput=renderComments;
+$('#clist').onclick=async e=>{
+  const b=e.target.closest('[data-cdel]');if(!b)return;
+  if(!confirm('ลบความคิดเห็นนี้? กู้คืนไม่ได้'))return;
+  b.disabled=true;
+  try{await api('/api/comments/'+encodeURIComponent(b.dataset.cdel),{method:'DELETE'});
+    comments=comments.filter(c=>c.id!==b.dataset.cdel);renderComments();toast('ลบความคิดเห็นแล้ว');}
+  catch(err){b.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}
+};
+
+// ---------- users (สมาชิก) ----------
+let users=[];
+async function loadUsers(){
+  $('#ulist').innerHTML='<div class="empty">กำลังโหลด...</div>';
+  try{users=await api('/api/admin/users');renderUsers();}
+  catch(e){if(e.message!=='unauthorized')$('#ulist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;}
+}
+function renderUsers(){
+  const q=$('#uq').value.trim().toLowerCase();
+  const a=users.filter(u=>!q||`${u.username} ${u.name}`.toLowerCase().includes(q));
+  $('#ucount').textContent=`(${users.length})`;
+  $('#ulist').innerHTML=a.length?a.map(u=>`<div class="cm"><div><div class="meta"><b>${esc(u.name)}</b> · @${esc(u.username)}</div><p class="mu">สมัครเมื่อ ${u.created?new Date(u.created).toLocaleString('th-TH'):'-'} · ความคิดเห็น ${u.comments}</p></div><button class="btn sm dan" data-udel="${u.id}">ลบสมาชิก</button></div>`).join('')
+  :`<div class="empty">${users.length?'ไม่พบสมาชิกที่ค้นหา':'ยังไม่มีสมาชิก'}</div>`;
+}
+$('#uq').oninput=renderUsers;
+$('#ulist').onclick=async e=>{
+  const b=e.target.closest('[data-udel]');if(!b)return;
+  const u=users.find(x=>x.id===+b.dataset.udel);
+  if(!confirm(`ลบสมาชิก “${u.name}” (@${u.username}) ?\nความคิดเห็นทั้งหมดของสมาชิกคนนี้ (${u.comments}) จะถูกลบด้วย และกู้คืนไม่ได้`))return;
+  b.disabled=true;
+  try{await api('/api/admin/users/'+u.id,{method:'DELETE'});toast('ลบสมาชิก “'+u.name+'” แล้ว');loadUsers();loadComments().catch(()=>{});loadGames();}
+  catch(err){b.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}
+};
+
+document.onkeydown=e=>{if(e.key==='Escape'&&$('#md').classList.contains('show'))closeEd();};
+addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+
+// เริ่มต้น: ถ้ามีโทเคนอยู่แล้วให้ตรวจว่ายังใช้ได้
+(async()=>{
+  if(!session)return show('login');
+  try{const d=await api('/api/admin/me');session.user=d.user;start();}
+  catch(e){if(e.message!=='unauthorized'){show('login');$('#lmsg').textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ('+e.message+')';}}
+})();
+</script>
+</body>
+</html>
