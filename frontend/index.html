@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Duffy Review | รีวิวเกม คะแนน และความคุ้มค่าก่อนซื้อ</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f5f6fa;--sf:#fff;--tx:#14182b;--mu:#667085;--bd:#e3e6ef;--ac:#ff6a2b;--ac2:#7c4dff;--sh:0 4px 18px rgba(20,24,43,.08);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -86,6 +87,34 @@ footer{border-top:1px solid var(--bd);text-align:center;padding:22px;color:var(-
 .rstars{display:flex;gap:4px;margin:6px 0}
 .rb{border:0;background:none;font-size:32px;line-height:1;color:var(--bd);padding:0 2px}
 .rstars:hover .rb{color:#f5a623}.rb:hover~.rb{color:var(--bd)}.rb.on{color:#f5a623}
+/* ---- สมาชิก ---- */
+.acct{display:flex;gap:6px;align-items:center}
+.ab1,.ab2{border-radius:10px;padding:7px 12px;font-size:14px;font-weight:500;white-space:nowrap;border:1px solid var(--bd);background:var(--sf)}
+.ab2{background:var(--ac);border-color:var(--ac);color:#fff}
+.ab1:hover{border-color:var(--mu)}
+.me{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;max-width:200px}
+.me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.am .ab{background:var(--sf);border-radius:18px;max-width:400px;width:100%;margin:8vh auto;padding:24px;display:grid;gap:12px;box-shadow:var(--sh)}
+.am h2{margin:0;font-size:20px}
+.at{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:12px;padding:4px}
+.at button{border:0;background:none;border-radius:9px;padding:8px;font-size:14px;color:var(--mu);font-weight:500}
+.at button.on{background:var(--sf);color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.am label{display:grid;gap:4px;font-size:13px;color:var(--mu);font-weight:500}
+.am label small{font-weight:400}
+.am [hidden]{display:none!important}
+.am input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-size:14px}
+.am input:focus{outline:2px solid var(--ac);border-color:transparent}
+.am .go{border:0;background:var(--ac);color:#fff;border-radius:10px;padding:10px;font-weight:500}
+.am .go:disabled{opacity:.6;cursor:wait}
+.am .er{color:#e5484d;font-size:13px;min-height:18px}
+.am .cl{justify-self:center;border:0;background:none;color:var(--mu);font-size:13px}
+.badge{font-size:11px;font-weight:500;color:var(--ac2);border:1px solid var(--ac2);border-radius:6px;padding:0 5px;margin-left:4px;vertical-align:1px}
+.need{background:var(--bg);border-radius:12px;padding:14px;margin:10px 0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.need span{flex:1;min-width:180px;color:var(--mu)}
+.asme{font-size:13px;color:var(--mu)}.asme b{color:var(--tx)}
+.cdel{border:0;background:none;color:var(--mu);font-size:12px;padding:0;margin-left:6px;text-decoration:underline}
+@media(max-width:600px){.acct{margin-left:auto}.me span{display:none}}
 </style>
 </head>
 <body>
@@ -98,6 +127,7 @@ footer{border-top:1px solid var(--bd);text-align:center;padding:22px;color:var(-
 <div class="dd" data-k="sort"><button class="nb">ความนิยม ▾</button><div class="dm"></div></div>
 </nav>
 <div class="sr"><input id="q" type="search" placeholder="ค้นหารีวิวเกม..." autocomplete="off"><kbd>/</kbd></div>
+<div class="acct" id="acct"></div>
 </div></header>
 <main>
 <section class="hero"><h1>Duffy Review</h1><p>รีวิวเกมตรงไปตรงมา พร้อมคะแนนและความคุ้มค่าก่อนซื้อ ครบทั้ง PC, มือถือ และคอนโซล</p></section>
@@ -108,8 +138,18 @@ footer{border-top:1px solid var(--bd);text-align:center;padding:22px;color:var(-
 </div>
 <aside><div class="box"><h2>Top 10 ยอดนิยม</h2><div id="top"></div></div></aside></div>
 </main>
-<footer>© 2026 Duffy Review · ข้อมูลรีวิวเป็นข้อมูลตัวอย่าง</footer>
+<footer>© 2026 Duffy Review · ข้อมูลรีวิวเป็นข้อมูลตัวอย่าง · <a href="admin.html" style="color:inherit;opacity:.7">ผู้ดูแล</a></footer>
 <div class="modal" id="md"><div class="mb" id="mb"></div></div>
+<div class="modal am" id="am"><form class="ab" id="af" novalidate>
+<h2 id="ah">เข้าสู่ระบบ</h2>
+<div class="at"><button type="button" data-am="login">เข้าสู่ระบบ</button><button type="button" data-am="register">สมัครสมาชิก</button></div>
+<label>ชื่อผู้ใช้ <small id="uhint" hidden>a-z, 0-9 หรือ _ ยาว 3–20 ตัว</small><input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false"></label>
+<label id="nwrap">ชื่อที่แสดง <small>แสดงในความคิดเห็น</small><input name="name" autocomplete="nickname" maxlength="30"></label>
+<label>รหัสผ่าน <small id="phint" hidden>อย่างน้อย 8 ตัวอักษร</small><input name="password" type="password" maxlength="100"></label>
+<button class="go" id="ago">เข้าสู่ระบบ</button>
+<div class="er" id="aer"></div>
+<button type="button" class="cl" data-amclose>ปิด</button>
+</form></div>
 <script src="config.js"></script>
 <script>
 let CATS=["ทั้งหมด","แอคชัน","RPG","ผจญภัย","แข่งรถ","ต่อสู้","สยองขวัญ","ยิงปืน","โมบา"];
@@ -119,7 +159,7 @@ const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
 const S={q:"",cat:"ทั้งหมด",age:"ทั้งหมด",sort:"new"};
 const $=s=>document.querySelector(s);
 const opts={cat:CATS.map(c=>[c,c]),age:AGES,sort:SORTS};
-function applyMeta(m){CATS=["ทั้งหมด",...m.categories];AGES=[["ทั้งหมด","ทุกช่วงอายุ"],...m.ages.map(a=>[a,a<=3?"3+ ทุกวัย":a+"+"])];opts.cat=CATS.map(c=>[c,c]);opts.age=AGES;}
+function applyMeta(m){GUESTS=!!m.commentGuests;if($('#cfw'))$('#cfw').innerHTML=cform();CATS=["ทั้งหมด",...m.categories];AGES=[["ทั้งหมด","ทุกช่วงอายุ"],...m.ages.map(a=>[a,a<=3?"3+ ทุกวัย":a+"+"])];opts.cat=CATS.map(c=>[c,c]);opts.age=AGES;}
 async function loadMeta(){try{applyMeta(await api('/api/meta'));dd();chips();}catch(e){}}
 const imgUrl=s=>/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s);
 let seq=0,timer,first=true,cur=null;
@@ -157,17 +197,19 @@ return `<div class="cv big" style="background:${bg(g)}">${img(g)}<span class="ag
 <div class="pc"><div><h4>จุดเด่น</h4><ul>${li(g.pros)}</ul></div><div><h4>จุดด้อย</h4><ul>${li(g.cons)}</ul></div></div>
 <div class="rate"><div id="rsum">${sumHtml(g)}</div><div class="rstars" id="rstars">${[1,2,3,4,5].map(n=>`<button class="rb ${n<=(g.myRating||0)?'on':''}" data-r="${n}" aria-label="${n} ดาว">★</button>`).join('')}</div><small id="rmsg" class="mu">${g.myRating?`คะแนนของคุณ: ${g.myRating} ดาว (กดดาวอื่นเพื่อเปลี่ยน)`:'กดดาวเพื่อให้คะแนนเกมนี้'}</small></div>
 <h3 id="cm"> ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)</h3>
-<div class="cf"><input id="cn" maxlength="30" placeholder="ชื่อของคุณ"><textarea id="ct" maxlength="500" rows="3" placeholder="แสดงความคิดเห็นเกี่ยวกับเกมนี้..."></textarea><button class="send">ส่งความคิดเห็น</button><span id="cmsg"></span></div>
+<div id="cfw">${cform()}</div>
 <div id="clist"></div><button class="x">ปิด</button></div>`;}
 async function loadComments(id){
 try{const r=await api(`/api/games/${id}/comments`);
-$('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt"><b>${esc(c.name)}</b> <span class="st">${c.rating?stars(c.rating):''}</span> <small>${new Date(c.date).toLocaleDateString('th-TH')}</small><p>${esc(c.text)}</p></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย!</p>';
+$('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt"><b>${esc(c.name)}</b>${c.userId?'<span class="badge">สมาชิก</span>':''} <span class="st">${c.rating?stars(c.rating):''}</span> <small>${new Date(c.date).toLocaleDateString('th-TH')}</small>${ME&&c.userId===ME.id?`<button class="cdel" data-cdel="${esc(c.id)}">ลบ</button>`:''}<p>${esc(c.text)}</p></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย!</p>';
 $('#ccount').textContent=r.length;}catch(e){$('#clist').innerHTML='<p class="mu">โหลดความคิดเห็นไม่สำเร็จ</p>';}}
 async function sendC(){
-const name=$('#cn').value.trim(),text=$('#ct').value.trim(),m=$('#cmsg');
+const name=$('#cn')?$('#cn').value.trim():'',text=$('#ct').value.trim(),m=$('#cmsg');
 m.textContent='กำลังส่ง...';
-try{const r=await fetch(`${API}/api/games/${cur.id}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,text})});
-const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);
+try{const r=await fetch(`${API}/api/games/${cur.id}/comments`,{method:'POST',headers:hdr(),body:JSON.stringify({name,text})});
+const d=await r.json();
+if(r.status===401&&d.needLogin){if(ME)setMember(null);m.textContent='';openAuth('login');return;}
+if(!r.ok)throw new Error(d.error||r.status);
 $('#ct').value='';m.textContent='ส่งความคิดเห็นแล้ว ขอบคุณครับ ';
 try{localStorage.setItem('duffy-name',name)}catch(_){}
 loadComments(cur.id);render();
@@ -186,7 +228,7 @@ m.textContent=`ขอบคุณที่ให้ ${n} ดาว (กดดา
 async function openM(id,jump){
 try{await fetch(`${API}/api/games/${id}/view`,{method:'POST'}).catch(()=>{});cur=await api('/api/games/'+id+'?voter='+encodeURIComponent(voter()));}catch(e){alert('โหลดรีวิวไม่สำเร็จ');return;}
 $('#mb').innerHTML=detail(cur);$('#md').classList.add('show');
-try{$('#cn').value=localStorage.getItem('duffy-name')||''}catch(_){}
+try{if($('#cn'))$('#cn').value=localStorage.getItem('duffy-name')||''}catch(_){}
 history.replaceState(null,'','#game-'+id);
 await loadComments(id);
 if(jump)$('#cm').scrollIntoView({behavior:'smooth'});
@@ -203,8 +245,74 @@ document.onclick=e=>{document.querySelectorAll('.dd').forEach(x=>x.classList.rem
 const c=e.target.closest('[data-i]');if(c)openM(+c.dataset.i,!!c.dataset.j);
 if(e.target.classList.contains('send'))sendC();
 const rb=e.target.closest('[data-r]');if(rb)rate(+rb.dataset.r);
-if(e.target.id==='md'||e.target.classList.contains('x'))closeM();};
-document.onkeydown=e=>{if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus();}if(e.key==='Escape')closeM();};
+if(e.target.id==='md'||e.target.classList.contains('x'))closeM();
+const ao=e.target.closest('[data-auth]');if(ao)openAuth(ao.dataset.auth);
+if(e.target.closest('#logoutBtn'))logoutM();
+const cd=e.target.closest('[data-cdel]');if(cd)delMine(cd);};
+document.onkeydown=e=>{if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus();}if(e.key==='Escape'){if($('#am').classList.contains('show'))closeAuth();else closeM();}};
+
+/* ================= สมาชิก ================= */
+let ME=null,GUESTS=false,amode='login';
+const MKEY='duffy-member';
+let mtoken=null;try{mtoken=localStorage.getItem(MKEY)}catch(_){}
+function hdr(){const h={'Content-Type':'application/json'};if(mtoken)h.Authorization='Bearer '+mtoken;return h;}
+function setMember(u,tok){
+  ME=u||null;if(tok!==undefined)mtoken=tok;if(!u)mtoken=null;
+  try{mtoken?localStorage.setItem(MKEY,mtoken):localStorage.removeItem(MKEY)}catch(_){}
+  renderAcct();if($('#cfw'))$('#cfw').innerHTML=cform();if(cur&&$('#clist'))loadComments(cur.id);
+}
+function renderAcct(){
+  $('#acct').innerHTML=ME?`<div class="me" title="${esc(ME.name)} (@${esc(ME.username)})"><span class="av">${esc([...ME.name][0]||'?').toUpperCase()}</span><span>${esc(ME.name)}</span></div><button class="ab1" id="logoutBtn">ออกจากระบบ</button>`
+    :`<button class="ab1" data-auth="login">เข้าสู่ระบบ</button><button class="ab2" data-auth="register">สมัครสมาชิก</button>`;
+}
+// ฟอร์มความคิดเห็น: สมาชิกไม่ต้องใส่ชื่อ / ผู้เยี่ยมชมต้องเข้าสู่ระบบก่อน (ยกเว้นเปิด COMMENT_GUESTS)
+function cform(){
+  const box=`<textarea id="ct" maxlength="500" rows="3" placeholder="แสดงความคิดเห็นเกี่ยวกับเกมนี้..."></textarea><button class="send">ส่งความคิดเห็น</button><span id="cmsg"></span>`;
+  if(ME)return `<div class="cf"><span class="asme">แสดงความคิดเห็นในชื่อ <b>${esc(ME.name)}</b></span>${box}</div>`;
+  if(GUESTS)return `<div class="cf"><input id="cn" maxlength="30" placeholder="ชื่อของคุณ">${box}</div>`;
+  return `<div class="need"><span>เข้าสู่ระบบหรือสมัครสมาชิกเพื่อแสดงความคิดเห็น</span><button class="ab1" data-auth="login">เข้าสู่ระบบ</button><button class="ab2" data-auth="register">สมัครสมาชิก</button></div>`;
+}
+const AF=n=>$('#af').elements[n];
+function setMode(m){
+  amode=m;const reg=m==='register';
+  $('#ah').textContent=reg?'สมัครสมาชิก':'เข้าสู่ระบบ';$('#ago').textContent=reg?'สมัครสมาชิก':'เข้าสู่ระบบ';
+  document.querySelectorAll('[data-am]').forEach(b=>b.classList.toggle('on',b.dataset.am===m));
+  $('#nwrap').hidden=!reg;$('#uhint').hidden=!reg;$('#phint').hidden=!reg;
+  AF('password').autocomplete=reg?'new-password':'current-password';$('#aer').textContent='';
+}
+function openAuth(m){setMode(m);$('#am').classList.add('show');setTimeout(()=>AF('username').focus(),0);}
+function closeAuth(){$('#am').classList.remove('show');AF('password').value='';}
+document.querySelectorAll('[data-am]').forEach(b=>b.onclick=()=>{setMode(b.dataset.am);AF('username').focus();});
+$('#am').addEventListener('click',e=>{if(e.target.id==='am'||e.target.closest('[data-amclose]'))closeAuth();});
+$('#af').onsubmit=async e=>{
+  e.preventDefault();const er=$('#aer'),go=$('#ago');er.textContent='';
+  const body={username:AF('username').value.trim().toLowerCase(),password:AF('password').value};
+  if(amode==='register'){body.name=AF('name').value.trim();
+    if(!/^[a-z0-9_]{3,20}$/.test(body.username)){er.textContent='ชื่อผู้ใช้ต้องเป็น a-z, 0-9 หรือ _ ยาว 3–20 ตัว';AF('username').focus();return;}
+    if(!body.name){er.textContent='กรุณาใส่ชื่อที่แสดง';AF('name').focus();return;}
+    if(body.password.length<8){er.textContent='รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร';AF('password').focus();return;}}
+  else if(!body.username||!body.password){er.textContent='กรุณาใส่ชื่อผู้ใช้และรหัสผ่าน';return;}
+  go.disabled=true;
+  try{const r=await fetch(`${API}/api/auth/${amode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){er.textContent=d.error||('เกิดข้อผิดพลาด ('+r.status+')');if(d.field&&AF(d.field))AF(d.field).focus();return;}
+    setMember(d.user,d.token);closeAuth();$('#af').reset();
+  }catch(_){er.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่';}
+  finally{go.disabled=false;}
+};
+async function logoutM(){try{await fetch(`${API}/api/auth/logout`,{method:'POST',headers:hdr()})}catch(_){}setMember(null);}
+async function loadMember(){
+  renderAcct();if(!mtoken)return;
+  try{const r=await fetch(`${API}/api/auth/me`,{headers:hdr()});
+    if(r.status===401)return setMember(null);
+    if(r.ok){const d=await r.json();setMember(d.user);}}catch(_){}
+}
+async function delMine(b){
+  if(!confirm('ลบความคิดเห็นนี้?'))return;
+  try{const r=await fetch(`${API}/api/comments/${encodeURIComponent(b.dataset.cdel)}`,{method:'DELETE',headers:hdr()});
+    if(!r.ok)throw new Error(r.status);loadComments(cur.id);render();}catch(e){alert('ลบไม่สำเร็จ');}
+}
+loadMember();
 const setViews=(id,n)=>document.querySelectorAll(`[data-vw="${id}"]`).forEach(e=>e.textContent=Number(n).toLocaleString());
 async function refreshViews(){if(document.hidden)return;try{const m=await api('/api/views');for(const id in m)setViews(id,m[id]);}catch(_){}}
 setInterval(refreshViews,10000);

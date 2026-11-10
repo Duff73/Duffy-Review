@@ -29,14 +29,25 @@ CREATE TABLE IF NOT EXISTS views (
   CONSTRAINT views_game_fk FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- สมาชิก (รหัสผ่านเก็บเป็น hash แบบ scrypt ไม่เก็บรหัสจริง)
+CREATE TABLE IF NOT EXISTS users (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  username      VARCHAR(30)  NOT NULL UNIQUE,
+  name          VARCHAR(30)  NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS comments (
   id      VARCHAR(32)  PRIMARY KEY,
   game_id INT          NOT NULL,
+  user_id INT          NULL,
   name    VARCHAR(30)  NOT NULL,
   `text`  VARCHAR(600) NOT NULL,
   rating  INT          NULL,
   `date`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   KEY comments_game_idx (game_id, `date`),
+  KEY comments_user_idx (user_id),
   CONSTRAINT comments_game_fk FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE,
   CONSTRAINT comments_rating_chk CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

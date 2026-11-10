@@ -10,3 +10,11 @@ services:
     envVars:
       - key: CORS_ORIGIN
         sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: COMMENT_GUESTS
+        value: "false"
