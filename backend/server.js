@@ -34,7 +34,7 @@ function stats(g) {
     score: +((g.score * PRIOR + sum * 2) / (PRIOR + r.length)).toFixed(1),
   };
 }
-const decorate = (g) => ({ ...g, views: viewsOf(g), ...stats(g) });
+const decorate = (g) => ({ ...g, link: g.link || "", views: viewsOf(g), ...stats(g) });
 
 // จำกัดการส่งคอมเมนต์ และกันนับวิวซ้ำจากคนเดิมในเวลาสั้นๆ
 const hits = new Map();
@@ -196,6 +196,7 @@ function cleanGame(b = {}) {
     views: Math.max(0, Math.floor(Number(b.views) || 0)), date: s("date", 10) || new Date().toISOString().slice(0, 10),
     desc: s("desc", 1000), review: s("review", 50000), pros: list(b.pros).map((x) => x.slice(0, 200)), cons: list(b.cons).map((x) => x.slice(0, 200)),
     platforms: s("platforms", 200), image: s("image", 500), hue: Math.round(Number(b.hue)),
+    link: s("link", 500),
   };
   if (!g.title) return ["กรุณาใส่ชื่อเกม"];
   if (!g.category) return ["กรุณาใส่หมวดหมู่"];
@@ -205,6 +206,7 @@ function cleanGame(b = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(g.date) || isNaN(Date.parse(g.date))) return ["วันที่ต้องเป็นรูปแบบ YYYY-MM-DD"];
   if (!(g.hue >= 0 && g.hue <= 360)) g.hue = 200;
   if (g.image && !/^(https?:\/\/|images\/)/i.test(g.image)) return ["รูปต้องเป็นลิงก์ https://... หรือ images/ชื่อไฟล์"];
+  if (g.link && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(g.link)) return ["ลิงก์ร้านค้าต้องขึ้นต้นด้วย https:// เช่น https://store.steampowered.com/app/..."];
   return [null, g];
 }
 const findGame = (id) => state.games.find((x) => x.id === id);

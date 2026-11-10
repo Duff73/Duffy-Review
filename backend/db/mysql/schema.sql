@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS games (
   platforms    VARCHAR(200) NOT NULL DEFAULT '',
   image        VARCHAR(500) NOT NULL DEFAULT '',
   hue          INT          NOT NULL DEFAULT 200,
+  store_url    VARCHAR(500) NOT NULL DEFAULT '',
   created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY games_category_idx (category),
   KEY games_age_idx (age),

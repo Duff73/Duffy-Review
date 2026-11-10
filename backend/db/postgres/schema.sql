@@ -17,8 +17,11 @@ CREATE TABLE IF NOT EXISTS games (
   platforms    TEXT        NOT NULL DEFAULT '',                   -- เช่น 'PS5 · PC'
   image        TEXT        NOT NULL DEFAULT '',                   -- เช่น 'images/dragon.jpg' หรือ 'https://...'
   hue          INT         NOT NULL DEFAULT 200,                  -- สีพื้นหลังสำรองเมื่อไม่มีรูป (0-360)
+  store_url    TEXT        NOT NULL DEFAULT '',                   -- ลิงก์ร้านค้า/เว็บเกม เช่น หน้า Steam (ว่าง = ปุ่มค้นหาบน Steam)
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- ฐานข้อมูลเดิมที่สร้างก่อนมีลิงก์ร้านค้า
+ALTER TABLE games ADD COLUMN IF NOT EXISTS store_url TEXT NOT NULL DEFAULT '';
 CREATE INDEX IF NOT EXISTS games_category_idx ON games (category);
 CREATE INDEX IF NOT EXISTS games_age_idx      ON games (age);
 

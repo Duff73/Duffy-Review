@@ -15,12 +15,14 @@ const toGame = (r) => ({
   id: r.id, title: r.title, category: r.category, age: r.age, score: Number(r.score),
   views: r.base_views, date: r.date, desc: r.description, review: r.review,
   pros: arr(r.pros), cons: arr(r.cons), platforms: r.platforms, image: r.image, hue: r.hue,
+  link: r.store_url || "",
 });
 const toComment = (r) => ({ id: r.id, gameId: r.game_id, userId: r.user_id ?? null, name: r.name, text: r.text, rating: r.rating, date: new Date(r.date).toISOString() });
 const toUser = (r) => ({ id: r.id, username: r.username, name: r.name, passwordHash: r.password_hash, created: new Date(r.created_at).toISOString() });
-// ค่าคอลัมน์ของเกมตามลำดับ title..hue (MySQL เก็บ pros/cons เป็น JSON text)
+// ค่าคอลัมน์ของเกมตามลำดับ title..hue, store_url (MySQL เก็บ pros/cons เป็น JSON text)
 const gameParams = (g, json) => [g.title, g.category, g.age, g.score, g.views || 0, g.date, g.desc, g.review || "",
-  json ? JSON.stringify(g.pros || []) : g.pros || [], json ? JSON.stringify(g.cons || []) : g.cons || [], g.platforms, g.image || "", g.hue];
+  json ? JSON.stringify(g.pros || []) : g.pros || [], json ? JSON.stringify(g.cons || []) : g.cons || [], g.platforms, g.image || "", g.hue,
+  g.link || ""];
 const readSql =(dir) => fs.readFileSync(path.join(__dirname, "db", dir, "schema.sql"), "utf8");
 
 // ---------------- PostgreSQL ----------------
@@ -32,7 +34,7 @@ function pgAdapter() {
   });
   pool.on("error", (e) => console.error("pg error:", e.message));
   const GAMES = `SELECT id, title, category, age, score, base_views, release_date::text AS date,
-    description, review, pros, cons, platforms, image, hue FROM games ORDER BY id`;
+    description, review, pros, cons, platforms, image, hue, store_url FROM games ORDER BY id`;
   return {
     async init(seed) {
       await pool.query(readSql("postgres"));
@@ -61,11 +63,11 @@ function pgAdapter() {
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES ($1,$2,$3) ON CONFLICT (game_id, voter) DO UPDATE SET stars = EXCLUDED.stars, updated_at = now()", [g, v, s]),
     // ---- ใช้โดยหน้า admin ----
     insertGame: async (g) => (await pool.query(
-      `INSERT INTO games (title,category,age,score,base_views,release_date,description,review,pros,cons,platforms,image,hue)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`, gameParams(g))).rows[0].id,
+      `INSERT INTO games (title,category,age,score,base_views,release_date,description,review,pros,cons,platforms,image,hue,store_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, gameParams(g))).rows[0].id,
     updateGame: (id, g) => pool.query(
       `UPDATE games SET title=$1, category=$2, age=$3, score=$4, base_views=$5, release_date=$6, description=$7,
-       review=$8, pros=$9, cons=$10, platforms=$11, image=$12, hue=$13 WHERE id=$14`, [...gameParams(g), id]),
+       review=$8, pros=$9, cons=$10, platforms=$11, image=$12, hue=$13, store_url=$14 WHERE id=$15`, [...gameParams(g), id]),
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = $1", [id]),
   };
 }
@@ -82,7 +84,7 @@ function mysqlAdapter() {
     ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
   });
   const GAMES = `SELECT id, title, category, age, score, base_views, DATE_FORMAT(release_date, '%Y-%m-%d') AS date,
-    description, review, pros, cons, platforms, image, hue FROM games ORDER BY id`;
+    description, review, pros, cons, platforms, image, hue, store_url FROM games ORDER BY id`;
   return {
     async init(seed) {
       const sql = readSql("mysql").replace(/^\s*--.*$/gm, "");
@@ -90,6 +92,9 @@ function mysqlAdapter() {
       // ฐานข้อมูลเดิมที่สร้างก่อนมีระบบสมาชิก: เพิ่มคอลัมน์ user_id ให้ตาราง comments (ถ้ามีอยู่แล้วข้าม)
       try { await pool.query("ALTER TABLE comments ADD COLUMN user_id INT NULL, ADD KEY comments_user_idx (user_id)"); }
       catch (e) { if (e.errno !== 1060 && e.errno !== 1061) throw e; }
+      // ฐานข้อมูลเดิม: เพิ่มคอลัมน์ลิงก์ร้านค้า/เว็บเกม (ถ้ามีอยู่แล้วข้าม)
+      try { await pool.query("ALTER TABLE games ADD COLUMN store_url VARCHAR(500) NOT NULL DEFAULT ''"); }
+      catch (e) { if (e.errno !== 1060) throw e; }
       const [rows] = await pool.query("SELECT COUNT(*) AS n FROM games");
       if (Number(rows[0].n) === 0) {
         for (const g of seed) { // ไม่ใส่ id ให้ AUTO_INCREMENT ทำเอง (id 0 ใช้ไม่ได้ใน MySQL)
@@ -116,10 +121,10 @@ function mysqlAdapter() {
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES (?,?,?) ON DUPLICATE KEY UPDATE stars = VALUES(stars)", [g, v, s]),
     // ---- ใช้โดยหน้า admin ----
     insertGame: async (g) => (await pool.query(
-      "INSERT INTO games (title,category,age,score,base_views,release_date,description,review,pros,cons,platforms,image,hue) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO games (title,category,age,score,base_views,release_date,description,review,pros,cons,platforms,image,hue,store_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       gameParams(g, true)))[0].insertId,
     updateGame: (id, g) => pool.query(
-      "UPDATE games SET title=?, category=?, age=?, score=?, base_views=?, release_date=?, description=?, review=?, pros=?, cons=?, platforms=?, image=?, hue=? WHERE id=?",
+      "UPDATE games SET title=?, category=?, age=?, score=?, base_views=?, release_date=?, description=?, review=?, pros=?, cons=?, platforms=?, image=?, hue=?, store_url=? WHERE id=?",
       [...gameParams(g, true), id]),
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = ?", [id]),
   };

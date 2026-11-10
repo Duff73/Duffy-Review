@@ -146,6 +146,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <label>แพลตฟอร์ม<input name="platforms" maxlength="200" placeholder="PS5 · PC"></label>
 <label>ยอดวิวตั้งต้น<input name="views" type="number" min="0" step="1"></label>
 <label class="w4">รูปปก <small>ลิงก์ https://... หรือ images/ชื่อไฟล์.jpg (แนะนำ 16:9)</small><input name="image" maxlength="500" placeholder="images/ชื่อไฟล์.jpg"></label>
+<label class="w4">ลิงก์ดูราคา / เว็บเกม <small>เช่น หน้า Steam ของเกม หรือเว็บทางการ (เว้นว่าง = ปุ่มค้นหาชื่อเกมบน Steam)</small><input name="link" type="url" maxlength="500" placeholder="https://store.steampowered.com/app/..."></label>
 <label class="w4">สีพื้นหลังสำรอง (เมื่อไม่มีรูป)<input name="hue" type="range" min="0" max="360"></label>
 <label class="w4">คำอธิบายสั้น (บนการ์ด)<input name="desc" maxlength="1000"></label>
 <label class="w4">เนื้อรีวิวเต็ม <small>เว้นบรรทัดว่างเพื่อขึ้นย่อหน้าใหม่</small><textarea name="review" rows="9"></textarea></label>
@@ -248,8 +249,8 @@ function openEd(g){
   editing=g||null;
   $('#etitle').textContent=g?'แก้ไขรีวิว':'เพิ่มรีวิวใหม่';
   const v=g?{...g,score:g.editorScore,pros:(g.pros||[]).join('\n'),cons:(g.cons||[]).join('\n')}
-    :{title:'',category:'',age:12,score:8,date:today(),platforms:'',views:0,image:'',hue:Math.floor(Math.random()*360),desc:'',review:'',pros:'',cons:''};
-  for(const k of ['title','category','age','score','date','platforms','views','image','hue','desc','review','pros','cons'])F(k).value=v[k]??'';
+    :{title:'',category:'',age:12,score:8,date:today(),platforms:'',views:0,image:'',link:'',hue:Math.floor(Math.random()*360),desc:'',review:'',pros:'',cons:''};
+  for(const k of ['title','category','age','score','date','platforms','views','image','link','hue','desc','review','pros','cons'])F(k).value=v[k]??'';
   $('#emsg').textContent='';$('#emsg').className='msg';dirty=false;preview();
   $('#md').classList.add('show');document.body.style.overflow='hidden';setTimeout(()=>F('title').focus(),0);
 }
@@ -268,7 +269,7 @@ $('#add').onclick=()=>openEd(null);
 $('#ef').onsubmit=async e=>{
   e.preventDefault();
   const m=$('#emsg'),b=$('#esave');
-  const body={};for(const k of ['title','category','age','score','date','platforms','views','image','hue','desc','review','pros','cons'])body[k]=F(k).value;
+  const body={};for(const k of ['title','category','age','score','date','platforms','views','image','link','hue','desc','review','pros','cons'])body[k]=F(k).value;
   if(!body.title.trim()){m.className='msg er';m.textContent='กรุณาใส่ชื่อเกม';F('title').focus();return;}
   if(!body.category.trim()){m.className='msg er';m.textContent='กรุณาใส่หมวดหมู่';F('category').focus();return;}
   b.disabled=true;m.className='msg';m.textContent='กำลังบันทึก...';
