@@ -60,8 +60,18 @@ function limiter(req, res, next) {
   a.push(now); hits.set(req.ip, a); next();
 }
 
+// ต้องเข้าสู่ระบบ (สมาชิกหรือผู้ดูแล) ก่อนดูเนื้อหาทุกอย่าง ปิดได้ด้วย REQUIRE_LOGIN=false
+// เส้นทางที่เปิดไว้: health, สมัคร/ล็อกอิน (/api/auth), admin (เช็กสิทธิ์เอง), ลบคอมเมนต์ (เช็กสิทธิ์เอง)
+const REQUIRE_LOGIN = process.env.REQUIRE_LOGIN !== "false";
+const OPEN = /^\/api\/(health|auth\/|admin\/|comments\/)/;
+app.use("/api", (req, res, next) => {
+  if (!REQUIRE_LOGIN || OPEN.test(req.originalUrl)) return next();
+  if (members.memberFrom(req) || auth.adminFrom(req)) return next();
+  res.status(401).json({ error: "กรุณาเข้าสู่ระบบ", needLogin: true });
+});
+
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "members-v1", storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "login-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง

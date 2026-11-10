@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เข้าสู่ระบบ | Duffy Review</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+<aside class="side">
+<div>
+<h2>รีวิวเกมตรงไปตรงมา<br>ก่อนตัดสินใจซื้อ</h2>
+<p>เข้าสู่ระบบเพื่ออ่านรีวิว ให้คะแนน และแสดงความคิดเห็นกับเพื่อนสมาชิก</p>
+<ul><li>คะแนนจากทีมงานและผู้อ่าน</li><li>จุดเด่น จุดด้อย ครบในที่เดียว</li><li>พูดคุยแลกเปลี่ยนในความคิดเห็น</li></ul>
+</div>
+<small>© 2026 Duffy Review</small>
+</aside>
+<main class="main">
+<form class="box" id="f" novalidate>
+<a class="logo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
+<h1>เข้าสู่ระบบ</h1>
+<p class="sub">ยินดีต้อนรับกลับมา</p>
+<label>ชื่อผู้ใช้<input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" autofocus></label>
+<label>รหัสผ่าน<div class="pw"><input name="password" type="password" autocomplete="current-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div></label>
+<button class="go" id="go">เข้าสู่ระบบ</button>
+<div class="msg" id="msg" role="alert"></div>
+<div class="alt">ยังไม่มีบัญชี? <a href="register.html" id="toReg">สมัครสมาชิก</a></div>
+</form>
+</main>
+<script src="config.js"></script>
+<script>
+const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
+const KEY="duffy-member";
+// กลับไปหน้าที่ตั้งใจจะเปิด (เฉพาะลิงก์ภายในเว็บนี้)
+const next=(()=>{const n=new URLSearchParams(location.search).get('next')||'';return /^\/(?![\/\\])/.test(n)||/^index\.html/.test(n)?n:'./';})();
+if(next!=='./')document.getElementById('toReg').href='register.html?next='+encodeURIComponent(next);
+let tok=null;try{tok=localStorage.getItem(KEY)}catch(_){}
+// ล็อกอินอยู่แล้ว -> ไปหน้าแรกเลย
+if(tok)fetch(API+'/api/auth/me',{headers:{Authorization:'Bearer '+tok}}).then(r=>{if(r.ok)location.replace(next);}).catch(()=>{});
+const f=document.getElementById('f'),msg=document.getElementById('msg'),go=document.getElementById('go');
+if(new URLSearchParams(location.search).get('out'))msg.style.color='var(--ok)',msg.textContent='ออกจากระบบแล้ว';
+document.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{const i=b.previousElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'แสดง':'ซ่อน';});
+f.onsubmit=async e=>{
+  e.preventDefault();msg.style.color='';msg.textContent='';
+  const username=f.username.value.trim().toLowerCase(),password=f.password.value;
+  if(!username){msg.textContent='กรุณาใส่ชื่อผู้ใช้';f.username.focus();return;}
+  if(!password){msg.textContent='กรุณาใส่รหัสผ่าน';f.password.focus();return;}
+  go.disabled=true;go.textContent='กำลังเข้าสู่ระบบ...';
+  try{
+    const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){msg.textContent=d.error||('เกิดข้อผิดพลาด ('+r.status+')');f.password.select();return;}
+    try{localStorage.setItem(KEY,d.token)}catch(_){}
+    location.replace(next);
+  }catch(_){msg.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่น 30–50 วินาที ลองใหม่อีกครั้ง)';}
+  finally{go.disabled=false;go.textContent='เข้าสู่ระบบ';}
+};
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 เว็บรีวิวเกม — **frontend** (HTML/CSS/JS) deploy บน Vercel, **backend** (Node.js + Express) deploy บน Render
 
 ```
-frontend/   หน้าเว็บ (index.html, admin.html, favicon.svg, config.js, vercel.json)
+frontend/   หน้าเว็บ (index.html, login.html, register.html, auth.css, admin.html, favicon.svg, config.js, vercel.json)
 backend/    REST API (server.js, auth.js, members.js, store.js, data/games.json)
 render.yaml ตั้งค่า Render
 ```
@@ -128,3 +128,9 @@ cd frontend && npx serve . -l 5500           # เปิด http://localhost:550
 
 ## ไอคอนเว็บ (favicon)
 `frontend/favicon.svg` ตัว D บนพื้นไล่สีส้ม-ม่วง ใช้ทั้งหน้าเว็บและหน้า admin
+
+## ต้องเข้าสู่ระบบก่อนใช้เว็บ
+- เปิดหน้าเว็บโดยยังไม่ได้ล็อกอิน จะถูกพาไปหน้า **เข้าสู่ระบบ** (`/login`) ทันที และมีหน้า **สมัครสมาชิก** (`/register`) แยกต่างหาก ล็อกอิน/สมัครเสร็จจะกลับไปหน้าที่ตั้งใจเปิดไว้ (เช่นลิงก์รีวิวเกมที่มีคนส่งมา)
+- ฝั่งเซิร์ฟเวอร์ล็อกด้วย: API ดูเกม/คอมเมนต์/ให้ดาว ต้องส่งโทเคนสมาชิกหรือผู้ดูแลเท่านั้น (เปิดไว้เฉพาะ `/api/health`, สมัคร/ล็อกอิน และ admin)
+- ผู้ดูแลที่ล็อกอินหน้า admin แล้ว กด "ดูหน้าเว็บ" ได้เลยโดยไม่ต้องสมัครสมาชิก (แต่แสดงความคิดเห็นไม่ได้)
+- ถ้าอยากกลับไปให้ทุกคนดูได้โดยไม่ต้องล็อกอิน ตั้ง `REQUIRE_LOGIN=false` บน Render (หน้าเว็บยังพาไปหน้าล็อกอินอยู่ ต้องแก้ index.html ด้วย)

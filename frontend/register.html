@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สมัครสมาชิก | Duffy Review</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+<aside class="side">
+<div>
+<h2>สมัครสมาชิกฟรี<br>ใช้เวลาไม่ถึงนาที</h2>
+<p>มีบัญชีแล้วอ่านรีวิวได้ทุกเกม ให้ดาว และแสดงความคิดเห็นในชื่อของคุณ</p>
+<ul><li>ไม่ต้องใช้อีเมล</li><li>รหัสผ่านถูกเข้ารหัส ไม่มีใครเห็น</li><li>ลบความคิดเห็นของตัวเองได้</li></ul>
+</div>
+<small>© 2026 Duffy Review</small>
+</aside>
+<main class="main">
+<form class="box" id="f" novalidate>
+<a class="logo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
+<h1>สร้างบัญชี</h1>
+<p class="sub">กรอกข้อมูลด้านล่างเพื่อสมัครสมาชิก</p>
+<label>ชื่อผู้ใช้ <small>ใช้ตอนเข้าสู่ระบบ</small><input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" autofocus><span class="hint" id="h-username">a-z, 0-9 หรือ _ ยาว 3–20 ตัว</span></label>
+<label>ชื่อที่แสดง <small>แสดงในความคิดเห็น</small><input name="name" autocomplete="nickname" maxlength="30"><span class="hint" id="h-name"></span></label>
+<label>รหัสผ่าน<div class="pw"><input name="password" type="password" autocomplete="new-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-password">อย่างน้อย 8 ตัวอักษร</span></label>
+<label>ยืนยันรหัสผ่าน<div class="pw"><input name="confirm" type="password" autocomplete="new-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-confirm"></span></label>
+<button class="go" id="go">สมัครสมาชิก</button>
+<div class="msg" id="msg" role="alert"></div>
+<div class="alt">มีบัญชีอยู่แล้ว? <a href="login.html" id="toLogin">เข้าสู่ระบบ</a></div>
+</form>
+</main>
+<script src="config.js"></script>
+<script>
+const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
+const KEY="duffy-member";
+const next=(()=>{const n=new URLSearchParams(location.search).get('next')||'';return /^\/(?![\/\\])/.test(n)||/^index\.html/.test(n)?n:'./';})();
+if(next!=='./')document.getElementById('toLogin').href='login.html?next='+encodeURIComponent(next);
+const f=document.getElementById('f'),msg=document.getElementById('msg'),go=document.getElementById('go');
+document.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{const i=b.previousElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'แสดง':'ซ่อน';});
+
+// ตรวจแต่ละช่อง คืนข้อความผิดพลาด (ว่าง = ผ่าน)
+const rules={
+  username:v=>/^[a-z0-9_]{3,20}$/.test(v.trim().toLowerCase())?'':'ต้องเป็น a-z, 0-9 หรือ _ ยาว 3–20 ตัว',
+  name:v=>v.trim()?'':'กรุณาใส่ชื่อที่แสดง',
+  password:v=>v.length<8?'ต้องยาวอย่างน้อย 8 ตัวอักษร':v.toLowerCase()===f.username.value.trim().toLowerCase()?'ต้องไม่เหมือนชื่อผู้ใช้':'',
+  confirm:v=>v===f.password.value?'':'รหัสผ่านไม่ตรงกัน',
+};
+const okText={username:'ใช้ชื่อนี้ได้',password:'รหัสผ่านใช้ได้',confirm:'รหัสผ่านตรงกัน',name:''};
+const defText={username:'a-z, 0-9 หรือ _ ยาว 3–20 ตัว',password:'อย่างน้อย 8 ตัวอักษร',name:'',confirm:''};
+function check(k,show){
+  const v=f[k].value,err=rules[k](v),h=document.getElementById('h-'+k);
+  if(!show&&!v){h.className='hint';h.textContent=defText[k];f[k].classList.remove('bad');return err;}
+  h.className='hint '+(err?'er':'ok');h.textContent=err||okText[k];f[k].classList.toggle('bad',!!err);
+  return err;
+}
+for(const k in rules)f[k].addEventListener('input',()=>{check(k);if(k==='password'&&f.confirm.value)check('confirm');});
+for(const k in rules)f[k].addEventListener('blur',()=>{if(f[k].value)check(k,true);});
+
+f.onsubmit=async e=>{
+  e.preventDefault();msg.textContent='';
+  const bad=Object.keys(rules).find(k=>check(k,true));
+  if(bad){f[bad].focus();return;}
+  go.disabled=true;go.textContent='กำลังสมัคร...';
+  try{
+    const r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:f.username.value.trim().toLowerCase(),name:f.name.value.trim(),password:f.password.value})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(d.field&&f[d.field]){const h=document.getElementById('h-'+d.field);h.className='hint er';h.textContent=d.error;f[d.field].classList.add('bad');f[d.field].focus();}
+      else msg.textContent=d.error||('เกิดข้อผิดพลาด ('+r.status+')');
+      return;
+    }
+    try{localStorage.setItem(KEY,d.token)}catch(_){}
+    location.replace(next);
+  }catch(_){msg.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่น 30–50 วินาที ลองใหม่อีกครั้ง)';}
+  finally{go.disabled=false;go.textContent='สมัครสมาชิก';}
+};
+</script>
+</body>
+</html>
