@@ -63,3 +63,11 @@ CREATE TABLE IF NOT EXISTS ratings (
   CONSTRAINT ratings_game_fk FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE,
   CONSTRAINT ratings_stars_chk CHECK (stars BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- รูปปกที่อัปโหลดจากหน้า admin (เสิร์ฟที่ /api/images/:id)
+CREATE TABLE IF NOT EXISTS images (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  mime       VARCHAR(50) NOT NULL,
+  data       MEDIUMBLOB  NOT NULL,
+  created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

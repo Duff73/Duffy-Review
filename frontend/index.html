@@ -157,7 +157,7 @@ const $=s=>document.querySelector(s);
 const opts={cat:CATS.map(c=>[c,c]),age:AGES,sort:SORTS};
 function applyMeta(m){GUESTS=!!m.commentGuests;if($('#cfw'))$('#cfw').innerHTML=cform();CATS=["ทั้งหมด",...m.categories];AGES=[["ทั้งหมด","ทุกช่วงอายุ"],...m.ages.map(a=>[a,a<=3?"3+ ทุกวัย":a+"+"])];opts.cat=CATS.map(c=>[c,c]);opts.age=AGES;}
 async function loadMeta(){try{applyMeta(await api('/api/meta'));dd();chips();}catch(e){}}
-const imgUrl=s=>/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s);
+const imgUrl=s=>/^\/api\/images\/\d+$/.test(s)?API+s:/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s); // รูปที่อัปโหลดผ่าน admin อยู่บนเซิร์ฟเวอร์ Render
 let seq=0,timer,first=true,cur=null;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);

@@ -69,6 +69,8 @@ function pgAdapter() {
       `UPDATE games SET title=$1, category=$2, age=$3, score=$4, base_views=$5, release_date=$6, description=$7,
        review=$8, pros=$9, cons=$10, platforms=$11, image=$12, hue=$13, store_url=$14 WHERE id=$15`, [...gameParams(g), id]),
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = $1", [id]),
+    saveImage: async (mime, data) => (await pool.query("INSERT INTO images (mime, data) VALUES ($1, $2) RETURNING id", [mime, data])).rows[0].id,
+    loadImage: async (id) => (await pool.query("SELECT mime, data FROM images WHERE id = $1", [id])).rows[0] || null,
   };
 }
 
@@ -127,6 +129,8 @@ function mysqlAdapter() {
       "UPDATE games SET title=?, category=?, age=?, score=?, base_views=?, release_date=?, description=?, review=?, pros=?, cons=?, platforms=?, image=?, hue=?, store_url=? WHERE id=?",
       [...gameParams(g, true), id]),
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = ?", [id]),
+    saveImage: async (mime, data) => (await pool.query("INSERT INTO images (mime, data) VALUES (?, ?)", [mime, data]))[0].insertId,
+    loadImage: async (id) => (await pool.query("SELECT mime, data FROM images WHERE id = ?", [id]))[0][0] || null,
   };
 }
 
@@ -184,6 +188,26 @@ async function removeGame(id) {
   if (!db) { gamesEdited = true; fileSave(); }
 }
 
+// ---- รูปที่อัปโหลด: ฐานข้อมูล หรือโฟลเดอร์ uploads (โหมดไฟล์ หายเมื่อ Render ฟรีรีสตาร์ต) ----
+const UPLOADS = path.join(path.dirname(FILE), "uploads");
+const EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+async function saveImage(mime, data) {
+  if (db) return Number(await db.saveImage(mime, data));
+  fs.mkdirSync(UPLOADS, { recursive: true });
+  const ids = fs.readdirSync(UPLOADS).map((f) => parseInt(f, 10)).filter(Number.isInteger);
+  const id = ids.reduce((m, x) => Math.max(m, x), 0) + 1;
+  fs.writeFileSync(path.join(UPLOADS, `${id}.${EXT[mime]}`), data);
+  return id;
+}
+async function loadImage(id) {
+  if (db) return db.loadImage(id);
+  for (const [mime, ext] of Object.entries(EXT)) {
+    const f = path.join(UPLOADS, `${id}.${ext}`);
+    if (fs.existsSync(f)) return { mime, data: fs.readFileSync(f) };
+  }
+  return null;
+}
+
 // ---- สมาชิก ----
 async function createUser(u) {
   let user;
@@ -203,4 +227,4 @@ async function removeUser(id) {
   return n - state.comments.length;
 }
 
-module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser };
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, saveImage, loadImage };

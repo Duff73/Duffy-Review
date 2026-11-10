@@ -63,7 +63,7 @@ function limiter(req, res, next) {
 // ต้องเข้าสู่ระบบ (สมาชิกหรือผู้ดูแล) ก่อนดูเนื้อหาทุกอย่าง ปิดได้ด้วย REQUIRE_LOGIN=false
 // เส้นทางที่เปิดไว้: health, สมัคร/ล็อกอิน (/api/auth), admin (เช็กสิทธิ์เอง), ลบคอมเมนต์ (เช็กสิทธิ์เอง)
 const REQUIRE_LOGIN = process.env.REQUIRE_LOGIN !== "false";
-const OPEN = /^\/api\/(health|auth\/|admin\/|comments\/)/;
+const OPEN = /^\/api\/(health|auth\/|admin\/|comments\/|images\/)/; // รูปต้องเปิดได้ด้วย <img> ซึ่งส่งโทเคนไม่ได้
 app.use("/api", (req, res, next) => {
   if (!REQUIRE_LOGIN || OPEN.test(req.originalUrl)) return next();
   if (members.memberFrom(req) || auth.adminFrom(req)) return next();
@@ -71,7 +71,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "login-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "upload-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
@@ -205,7 +205,7 @@ function cleanGame(b = {}) {
   g.score = Math.round(g.score * 10) / 10;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(g.date) || isNaN(Date.parse(g.date))) return ["วันที่ต้องเป็นรูปแบบ YYYY-MM-DD"];
   if (!(g.hue >= 0 && g.hue <= 360)) g.hue = 200;
-  if (g.image && !/^(https?:\/\/|images\/)/i.test(g.image)) return ["รูปต้องเป็นลิงก์ https://... หรือ images/ชื่อไฟล์"];
+  if (g.image && !/^(https?:\/\/|images\/|\/api\/images\/\d+$)/i.test(g.image)) return ["รูปต้องเป็นลิงก์ https://... หรือ images/ชื่อไฟล์ หรือกดปุ่มอัปโหลดรูป"];
   if (g.link && !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(g.link)) return ["ลิงก์ร้านค้าต้องขึ้นต้นด้วย https:// เช่น https://store.steampowered.com/app/..."];
   return [null, g];
 }
@@ -233,6 +233,34 @@ app.delete("/api/admin/games/:id", auth.requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!findGame(id)) return res.status(404).json({ error: "ไม่พบเกมนี้" });
   try { await store.removeGame(id); res.json({ ok: true }); } catch (e) { fail(res, e); }
+});
+
+// ---- อัปโหลดรูปปก (admin) เก็บในฐานข้อมูล แล้วเสิร์ฟที่ /api/images/:id ----
+// เช็กชนิดไฟล์จากเนื้อไฟล์จริง ไม่เชื่อ Content-Type (ไม่รับ SVG/HTML)
+function sniffImage(b) {
+  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.length > 8 && b.subarray(0, 8).toString("hex") === "89504e470d0a1a0a") return "image/png";
+  if (b.length > 6 && /^GIF8[79]a$/.test(b.subarray(0, 6).toString("latin1"))) return "image/gif";
+  if (b.length > 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP") return "image/webp";
+  return null;
+}
+app.post("/api/admin/images", auth.requireAdmin, express.raw({ type: () => true, limit: "3mb" }), async (req, res) => {
+  const buf = req.body;
+  if (!Buffer.isBuffer(buf) || !buf.length) return res.status(400).json({ error: "ไม่พบไฟล์รูป" });
+  const mime = sniffImage(buf);
+  if (!mime) return res.status(400).json({ error: "รองรับเฉพาะไฟล์ JPG, PNG, WebP หรือ GIF" });
+  try { const id = await store.saveImage(mime, buf); res.status(201).json({ path: `/api/images/${id}`, size: buf.length, type: mime }); }
+  catch (e) { fail(res, e); }
+});
+app.get("/api/images/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) return res.status(404).end();
+  try {
+    const img = await store.loadImage(id);
+    if (!img) return res.status(404).end();
+    res.set({ "Content-Type": img.mime, "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff" });
+    res.send(img.data);
+  } catch (e) { console.error("image load failed:", e.message); res.status(500).end(); }
 });
 
 // คอมเมนต์ล่าสุดทุกเกม สำหรับหน้า admin

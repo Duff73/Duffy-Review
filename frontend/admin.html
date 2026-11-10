@@ -80,6 +80,10 @@ main{max-width:1180px;margin:auto;padding:20px 16px 48px}
 @media(max-width:640px){.g2{grid-template-columns:1fr 1fr}}
 .pv{height:170px;border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:700;font-size:18px}
 .pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pv.drop{outline:3px dashed var(--ac);outline-offset:-6px}
+.pv .hint{position:absolute;right:12px;bottom:12px;z-index:2;font-size:12px;font-weight:500;background:rgba(0,0,0,.55);padding:3px 9px;border-radius:8px}
+.imgrow{display:flex;gap:8px}.imgrow input{flex:1;min-width:0}
+.btn.up{background:var(--ac2);border-color:var(--ac2);color:#fff;font-weight:500}
 .pv::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(0,0,0,.7))}
 .pv span{position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 .pv .sc{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:10px;font-size:16px}
@@ -145,7 +149,9 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <label>วันที่ลงรีวิว<input name="date" type="date"></label>
 <label>แพลตฟอร์ม<input name="platforms" maxlength="200" placeholder="PS5 · PC"></label>
 <label>ยอดวิวตั้งต้น<input name="views" type="number" min="0" step="1"></label>
-<label class="w4">รูปปก <small>ลิงก์ https://... หรือ images/ชื่อไฟล์.jpg (แนะนำ 16:9)</small><input name="image" maxlength="500" placeholder="images/ชื่อไฟล์.jpg"></label>
+<div class="w4" style="display:grid;gap:4px"><label for="f-image">รูปปก <small>กดอัปโหลด หรือลากไฟล์รูปมาวางบนภาพตัวอย่างด้านบน (แนะนำ 16:9) / ใส่ลิงก์ https://... ก็ได้</small></label>
+<div class="imgrow"><input id="f-image" name="image" maxlength="500" placeholder="อัปโหลดรูป หรือวางลิงก์รูป"><button type="button" class="btn up" id="upbtn">อัปโหลดรูป</button></div>
+<input type="file" id="upfile" accept="image/jpeg,image/png,image/webp,image/gif" hidden><span class="msg" id="upmsg"></span></div>
 <label class="w4">ลิงก์ดูราคา / เว็บเกม <small>เช่น หน้า Steam ของเกม หรือเว็บทางการ (เว้นว่าง = ปุ่มค้นหาชื่อเกมบน Steam)</small><input name="link" type="url" maxlength="500" placeholder="https://store.steampowered.com/app/..."></label>
 <label class="w4">สีพื้นหลังสำรอง (เมื่อไม่มีรูป)<input name="hue" type="range" min="0" max="360"></label>
 <label class="w4">คำอธิบายสั้น (บนการ์ด)<input name="desc" maxlength="1000"></label>
@@ -165,7 +171,7 @@ const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
 const KEY="duffy-admin";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const imgUrl=s=>/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s);
+const imgUrl=s=>/^\/api\/images\/\d+$/.test(s)?API+s:/%[0-9a-f]{2}/i.test(s)?s:encodeURI(s); // รูปที่อัปโหลดอยู่บนเซิร์ฟเวอร์ Render
 const bg=h=>`linear-gradient(135deg,hsl(${h},70%,45%),hsl(${(+h+60)%360},65%,30%))`;
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
 let session=null,games=[],comments=[],editing=null,dirty=false;
@@ -251,7 +257,7 @@ function openEd(g){
   const v=g?{...g,score:g.editorScore,pros:(g.pros||[]).join('\n'),cons:(g.cons||[]).join('\n')}
     :{title:'',category:'',age:12,score:8,date:today(),platforms:'',views:0,image:'',link:'',hue:Math.floor(Math.random()*360),desc:'',review:'',pros:'',cons:''};
   for(const k of ['title','category','age','score','date','platforms','views','image','link','hue','desc','review','pros','cons'])F(k).value=v[k]??'';
-  $('#emsg').textContent='';$('#emsg').className='msg';dirty=false;preview();
+  $('#emsg').textContent='';$('#emsg').className='msg';$('#upmsg').textContent='';dirty=false;preview();
   $('#md').classList.add('show');document.body.style.overflow='hidden';setTimeout(()=>F('title').focus(),0);
 }
 function closeEd(force){
@@ -261,8 +267,49 @@ function closeEd(force){
 function preview(){
   const t=F('title').value||'ชื่อเกม',im=F('image').value.trim(),h=F('hue').value;
   $('#pv').style.background=bg(h);
-  $('#pv').innerHTML=`${im?`<img src="${esc(imgUrl(im))}" alt="" onerror="this.remove()">`:''}<span class="ag">${esc(F('age').value)}+</span><span class="sc">${esc(F('score').value||'-')}</span><span>${esc(t)}</span>`;
+  $('#pv').innerHTML=`${im?`<img src="${esc(imgUrl(im))}" alt="" onerror="this.remove()">`:''}<span class="ag">${esc(F('age').value)}+</span><span class="sc">${esc(F('score').value||'-')}</span><span>${esc(t)}</span><span class="hint">ลากรูปมาวางที่นี่ได้</span>`;
 }
+
+// ---------- อัปโหลดรูป: ย่อในเบราว์เซอร์ก่อน (กว้างไม่เกิน 1280px) แล้วส่งไปเก็บบนเซิร์ฟเวอร์ ----------
+const MAXW=1280;
+async function shrink(file){
+  if(file.type==='image/gif')return file; // เก็บภาพเคลื่อนไหวไว้ตามเดิม
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('เปิดไฟล์รูปนี้ไม่ได้'));i.src=url;});
+    const s=Math.min(1,MAXW/img.naturalWidth),w=Math.round(img.naturalWidth*s),h=Math.round(img.naturalHeight*s);
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    let b=await new Promise(r=>c.toBlob(r,'image/webp',0.85));
+    if(!b||b.type!=='image/webp')b=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));
+    return b.size<file.size||s<1?b:file; // ไม่ทำให้ไฟล์เล็กอยู่แล้วใหญ่ขึ้น
+  }finally{URL.revokeObjectURL(url);}
+}
+async function uploadImage(file){
+  const m=$('#upmsg'),b=$('#upbtn');
+  if(!file)return;
+  if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type)){m.className='msg er';m.textContent='รองรับเฉพาะไฟล์ JPG, PNG, WebP หรือ GIF';return;}
+  b.disabled=true;m.className='msg';m.textContent='กำลังย่อรูป...';
+  try{
+    const blob=await shrink(file);
+    if(blob.size>3*1024*1024)throw new Error('ไฟล์ใหญ่เกิน 3 MB');
+    m.textContent=`กำลังอัปโหลด (${Math.ceil(blob.size/1024)} KB)...`;
+    const r=await fetch(API+'/api/admin/images',{method:'POST',headers:{'Content-Type':blob.type||'application/octet-stream',Authorization:'Bearer '+session.token},body:blob});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401){closeEd(true);save(null);show('login');$('#lmsg').textContent='เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';return;}
+    if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+    F('image').value=d.path;dirty=true;preview();
+    m.className='msg ok';m.textContent=`อัปโหลดแล้ว (${Math.ceil(d.size/1024)} KB) อย่าลืมกด "บันทึก"`;
+  }catch(e){m.className='msg er';m.textContent='อัปโหลดไม่สำเร็จ: '+(e.message==='Failed to fetch'?'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้':e.message);}
+  finally{b.disabled=false;$('#upfile').value='';}
+}
+$('#upbtn').onclick=()=>$('#upfile').click();
+$('#upfile').onchange=e=>uploadImage(e.target.files[0]);
+const pv=$('#pv');
+pv.ondragover=e=>{e.preventDefault();pv.classList.add('drop');};
+pv.ondragleave=()=>pv.classList.remove('drop');
+pv.ondrop=e=>{e.preventDefault();e.stopPropagation();pv.classList.remove('drop');uploadImage(e.dataTransfer.files[0]);};
+// ปล่อยไฟล์พลาดนอกกรอบตอนเปิดฟอร์ม: ไม่ให้เบราว์เซอร์เปิดไฟล์แทนหน้า admin
+['dragover','drop'].forEach(t=>addEventListener(t,e=>{if($('#md').classList.contains('show'))e.preventDefault();}));
 $('#ef').oninput=e=>{dirty=true;if(['title','image','hue','age','score'].includes(e.target.name))preview();};
 $('#md').onclick=e=>{if(e.target.id==='md'||e.target.closest('[data-close]'))closeEd();};
 $('#add').onclick=()=>openEd(null);
