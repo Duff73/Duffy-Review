@@ -18,7 +18,8 @@ const toGame = (r) => ({
   link: r.store_url || "",
 });
 const toComment = (r) => ({ id: r.id, gameId: r.game_id, userId: r.user_id ?? null, name: r.name, text: r.text, rating: r.rating, date: new Date(r.date).toISOString() });
-const toUser = (r) => ({ id: r.id, username: r.username, name: r.name, passwordHash: r.password_hash, created: new Date(r.created_at).toISOString() });
+const obj = (x) => { if (x && typeof x === "object") return x; try { const o = JSON.parse(x || "{}"); return o && typeof o === "object" ? o : {}; } catch (_) { return {}; } };
+const toUser = (r) => ({ id: r.id, username: r.username, name: r.name, passwordHash: r.password_hash, profile: obj(r.profile), created: new Date(r.created_at).toISOString() });
 // ค่าคอลัมน์ของเกมตามลำดับ title..hue, store_url (MySQL เก็บ pros/cons เป็น JSON text)
 const gameParams = (g, json) => [g.title, g.category, g.age, g.score, g.views || 0, g.date, g.desc, g.review || "",
   json ? JSON.stringify(g.pros || []) : g.pros || [], json ? JSON.stringify(g.cons || []) : g.cons || [], g.platforms, g.image || "", g.hue,
@@ -58,6 +59,7 @@ function pgAdapter() {
     loadUsers: async () => (await pool.query("SELECT * FROM users ORDER BY id")).rows.map(toUser),
     insertUser: async (u) => toUser((await pool.query("INSERT INTO users (username, name, password_hash) VALUES ($1,$2,$3) RETURNING *", [u.username, u.name, u.passwordHash])).rows[0]),
     deleteUser: async (id) => { await pool.query("DELETE FROM comments WHERE user_id = $1", [id]); await pool.query("DELETE FROM users WHERE id = $1", [id]); },
+    updateUser: (id, u) => pool.query("UPDATE users SET name = $1, profile = $2 WHERE id = $3", [u.name, JSON.stringify(u.profile), id]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = $1", [id]),
     loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings")).rows.forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES ($1,$2,$3) ON CONFLICT (game_id, voter) DO UPDATE SET stars = EXCLUDED.stars, updated_at = now()", [g, v, s]),
@@ -97,6 +99,9 @@ function mysqlAdapter() {
       // ฐานข้อมูลเดิม: เพิ่มคอลัมน์ลิงก์ร้านค้า/เว็บเกม (ถ้ามีอยู่แล้วข้าม)
       try { await pool.query("ALTER TABLE games ADD COLUMN store_url VARCHAR(500) NOT NULL DEFAULT ''"); }
       catch (e) { if (e.errno !== 1060) throw e; }
+      // ฐานข้อมูลเดิม: เพิ่มคอลัมน์โปรไฟล์สมาชิก (ถ้ามีอยู่แล้วข้าม)
+      try { await pool.query("ALTER TABLE users ADD COLUMN profile TEXT NULL"); }
+      catch (e) { if (e.errno !== 1060) throw e; }
       const [rows] = await pool.query("SELECT COUNT(*) AS n FROM games");
       if (Number(rows[0].n) === 0) {
         for (const g of seed) { // ไม่ใส่ id ให้ AUTO_INCREMENT ทำเอง (id 0 ใช้ไม่ได้ใน MySQL)
@@ -118,6 +123,7 @@ function mysqlAdapter() {
       return toUser((await pool.query("SELECT * FROM users WHERE id = ?", [r.insertId]))[0][0]);
     },
     deleteUser: async (id) => { await pool.query("DELETE FROM comments WHERE user_id = ?", [id]); await pool.query("DELETE FROM users WHERE id = ?", [id]); },
+    updateUser: (id, u) => pool.query("UPDATE users SET name = ?, profile = ? WHERE id = ?", [u.name, JSON.stringify(u.profile), id]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = ?", [id]),
     loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings"))[0].forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES (?,?,?) ON DUPLICATE KEY UPDATE stars = VALUES(stars)", [g, v, s]),
@@ -226,5 +232,13 @@ async function removeUser(id) {
   if (!db) fileSave();
   return n - state.comments.length;
 }
+// แก้ชื่อที่แสดง + โปรไฟล์ (ฐานข้อมูลก่อน แล้วค่อยอัปเดต state)
+async function updateUser(id, { name, profile }) {
+  if (db) await db.updateUser(id, { name, profile });
+  const u = state.users.find((x) => x.id === id);
+  if (u) { u.name = name; u.profile = profile; }
+  if (!db) fileSave();
+  return u;
+}
 
-module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, saveImage, loadImage };
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage };

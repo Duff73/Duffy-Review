@@ -37,8 +37,11 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT NOT NULL UNIQUE,                 -- a-z 0-9 _ (ตัวเล็กเสมอ)
   name          TEXT NOT NULL,                        -- ชื่อที่แสดงในความคิดเห็น
   password_hash TEXT NOT NULL,
+  profile       TEXT NOT NULL DEFAULT '{}',           -- โปรไฟล์ (JSON): bio, avatar, banner, accent, favs
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- ฐานข้อมูลเดิมที่สร้างก่อนมีโปรไฟล์
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile TEXT NOT NULL DEFAULT '{}';
 
 -- ความคิดเห็นและคะแนนจากผู้อ่าน
 CREATE TABLE IF NOT EXISTS comments (

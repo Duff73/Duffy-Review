@@ -71,7 +71,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "upload-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "profile-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
@@ -147,7 +147,7 @@ app.post("/api/games/:id/view", (req, res) => {
 
 app.get("/api/games/:id/comments", (req, res) => {
   const id = Number(req.params.id);
-  res.json(state.comments.filter((c) => c.gameId === id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 100));
+  res.json(state.comments.filter((c) => c.gameId === id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 100).map(members.decorateComment));
 });
 
 // แสดงความคิดเห็น: สมาชิกใช้ชื่อจากบัญชี / ผู้เยี่ยมชมพิมพ์ชื่อเอง (เฉพาะเมื่อ COMMENT_GUESTS=true)
@@ -244,14 +244,27 @@ function sniffImage(b) {
   if (b.length > 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP") return "image/webp";
   return null;
 }
-app.post("/api/admin/images", auth.requireAdmin, express.raw({ type: () => true, limit: "3mb" }), async (req, res) => {
+async function saveUpload(req, res) {
   const buf = req.body;
   if (!Buffer.isBuffer(buf) || !buf.length) return res.status(400).json({ error: "ไม่พบไฟล์รูป" });
   const mime = sniffImage(buf);
   if (!mime) return res.status(400).json({ error: "รองรับเฉพาะไฟล์ JPG, PNG, WebP หรือ GIF" });
   try { const id = await store.saveImage(mime, buf); res.status(201).json({ path: `/api/images/${id}`, size: buf.length, type: mime }); }
   catch (e) { fail(res, e); }
-});
+}
+const imageBody = express.raw({ type: () => true, limit: "3mb" });
+app.post("/api/admin/images", auth.requireAdmin, imageBody, saveUpload);
+
+// สมาชิกอัปโหลดรูปโปรไฟล์/แบนเนอร์ได้ไม่เกิน 10 รูป / ชั่วโมง / คน (หน้าเว็บย่อรูปให้ก่อนส่ง)
+const upHits = new Map();
+setInterval(() => { const now = Date.now(); for (const [k, a] of upHits) if (!a.some((t) => now - t < 3600000)) upHits.delete(k); }, 600000).unref();
+function uploadLimit(req, res, next) {
+  const now = Date.now(), k = req.member.id;
+  const a = (upHits.get(k) || []).filter((t) => now - t < 3600000);
+  if (a.length >= 10) return res.status(429).json({ error: "อัปโหลดรูปถี่เกินไป กรุณาลองใหม่ภายหลัง" });
+  a.push(now); upHits.set(k, a); next();
+}
+app.post("/api/auth/images", members.requireMember, uploadLimit, imageBody, saveUpload);
 app.get("/api/images/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(404).end();

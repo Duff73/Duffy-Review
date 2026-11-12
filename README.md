@@ -3,7 +3,7 @@
 เว็บรีวิวเกม — **frontend** (HTML/CSS/JS) deploy บน Vercel, **backend** (Node.js + Express) deploy บน Render
 
 ```
-frontend/   หน้าเว็บ (index.html, login.html, register.html, auth.css, admin.html, favicon.svg, config.js, vercel.json)
+frontend/   หน้าเว็บ (index.html, profile.html, site.css, login.html, register.html, auth.css, admin.html, favicon.svg, config.js, vercel.json)
 backend/    REST API (server.js, auth.js, members.js, store.js, data/games.json)
 render.yaml ตั้งค่า Render
 ```
@@ -153,3 +153,16 @@ cd frontend && npx serve . -l 5500           # เปิด http://localhost:550
 ## ผู้จัดทำ (Contributors)
 * Sanyajj007
 * Duff73
+
+## โปรไฟล์สมาชิก
+- กดรูปตัวเองมุมขวาบน หรือเปิด `/profile` เพื่อดูโปรไฟล์ตัวเอง กดชื่อคนในความคิดเห็นเพื่อดูโปรไฟล์คนอื่น (`/profile?u=ชื่อผู้ใช้`)
+- หน้าโปรไฟล์ใช้ธีมเดียวกับหน้าแรก (ไฟล์ `frontend/site.css` ใช้ร่วมกันทั้งสองหน้า แก้สี/รูปแบบที่ไฟล์นี้ที่เดียว)
+- **แก้ไขโปรไฟล์**: รูปโปรไฟล์ (ตัดเป็นสี่เหลี่ยมจัตุรัส 400px ในเบราว์เซอร์) หรือใช้ตัวอักษรแรกของชื่อ, รูปแบนเนอร์ หรือใช้สีของเว็บ, ชื่อที่แสดง, แนะนำตัว 160 ตัวอักษร, เกมโปรด 3 เกม (แสดงเป็นการ์ดแบบเดียวกับหน้าแรก) — เห็นตัวอย่างด้านบนหน้าต่างก่อนกดบันทึก
+- เปลี่ยนชื่อ/รูปแล้ว ความคิดเห็นเก่าแสดงชื่อและรูปใหม่ตาม
+- สมาชิกอัปโหลดรูปได้ไม่เกิน 10 รูป/ชั่วโมง เก็บในตาราง `images` เหมือนรูปปกเกม โปรไฟล์เก็บในคอลัมน์ `users.profile` (JSON, ระบบเพิ่มให้เองตอนเซิร์ฟเวอร์เริ่ม)
+
+| Endpoint | ใช้ทำอะไร |
+|---|---|
+| `PUT /api/auth/profile` | แก้โปรไฟล์ตัวเอง `{name, bio, avatar, banner, accent, favs}` |
+| `POST /api/auth/images` | สมาชิกอัปโหลดรูปโปรไฟล์/แบนเนอร์ |
+| `GET /api/users/:username` | ดูโปรไฟล์ สถิติ ป้าย เกมโปรด และความคิดเห็นล่าสุด |

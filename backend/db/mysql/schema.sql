@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
   username      VARCHAR(30)  NOT NULL UNIQUE,
   name          VARCHAR(30)  NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  profile       TEXT         NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
