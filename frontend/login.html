@@ -5,31 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>เข้าสู่ระบบ | Duffy Review</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<script>try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="auth.css">
 </head>
 <body>
-<aside class="side">
-<div>
-<h2>รีวิวเกมตรงไปตรงมา<br>ก่อนตัดสินใจซื้อ</h2>
-<p>เข้าสู่ระบบเพื่ออ่านรีวิว ให้คะแนน และแสดงความคิดเห็นกับเพื่อนสมาชิก</p>
-<ul><li>คะแนนจากทีมงานและผู้อ่าน</li><li>จุดเด่น จุดด้อย ครบในที่เดียว</li><li>พูดคุยแลกเปลี่ยนในความคิดเห็น</li></ul>
-</div>
-<small>© 2026 Duffy Review</small>
+<aside class="show">
+  <span class="brand"><i>D</i><span>Duffy <b>Review</b></span></span>
+  <div class="cols" id="cols" aria-hidden="true"></div>
+  <div class="sin">
+    <h2>รีวิวเกมตรงไปตรงมา<br>ก่อนตัดสินใจซื้อ</h2>
+    <p>คะแนนจากทีมงานและผู้อ่าน จุดเด่นจุดด้อยครบ แล้วมาคุยกันต่อในความคิดเห็น</p>
+  </div>
 </aside>
 <main class="main">
+<button class="tg" id="tg" type="button" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด"></button>
 <form class="box" id="f" novalidate>
-<a class="logo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
+<a class="mlogo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
 <h1>เข้าสู่ระบบ</h1>
-<p class="sub">ยินดีต้อนรับกลับมา</p>
-<label>ชื่อผู้ใช้<input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" autofocus></label>
-<label>รหัสผ่าน<div class="pw"><input name="password" type="password" autocomplete="current-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div></label>
-<button class="go" id="go">เข้าสู่ระบบ</button>
+<p class="sub">ยินดีต้อนรับกลับมา เข้าสู่ระบบเพื่ออ่านรีวิวต่อ</p>
+<label>ชื่อผู้ใช้<div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" placeholder="ชื่อผู้ใช้ของคุณ" autofocus></div></label>
+<label>รหัสผ่าน<div class="fi pw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input name="password" type="password" autocomplete="current-password" maxlength="100" placeholder="รหัสผ่าน"><button type="button" class="eye" data-eye>แสดง</button></div></label>
+<button class="go" id="go"><span>เข้าสู่ระบบ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 <div class="msg" id="msg" role="alert"></div>
 <div class="alt">ยังไม่มีบัญชี? <a href="register.html" id="toReg">สมัครสมาชิก</a></div>
 </form>
 </main>
 <script src="config.js"></script>
+<script src="auth-show.js"></script>
 <script>
 const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
 const KEY="duffy-member";
@@ -47,7 +50,7 @@ f.onsubmit=async e=>{
   const username=f.username.value.trim().toLowerCase(),password=f.password.value;
   if(!username){msg.textContent='กรุณาใส่ชื่อผู้ใช้';f.username.focus();return;}
   if(!password){msg.textContent='กรุณาใส่รหัสผ่าน';f.password.focus();return;}
-  go.disabled=true;go.textContent='กำลังเข้าสู่ระบบ...';
+  go.disabled=true;go.firstElementChild.textContent='กำลังเข้าสู่ระบบ...';
   try{
     const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
     const d=await r.json().catch(()=>({}));
@@ -55,7 +58,7 @@ f.onsubmit=async e=>{
     try{localStorage.setItem(KEY,d.token)}catch(_){}
     location.replace(next);
   }catch(_){msg.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่น 30–50 วินาที ลองใหม่อีกครั้ง)';}
-  finally{go.disabled=false;go.textContent='เข้าสู่ระบบ';}
+  finally{go.disabled=false;go.firstElementChild.textContent='เข้าสู่ระบบ';}
 };
 </script>
 </body>

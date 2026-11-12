@@ -5,33 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>สมัครสมาชิก | Duffy Review</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<script>try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="auth.css">
 </head>
 <body>
-<aside class="side">
-<div>
-<h2>สมัครสมาชิกฟรี<br>ใช้เวลาไม่ถึงนาที</h2>
-<p>มีบัญชีแล้วอ่านรีวิวได้ทุกเกม ให้ดาว และแสดงความคิดเห็นในชื่อของคุณ</p>
-<ul><li>ไม่ต้องใช้อีเมล</li><li>รหัสผ่านถูกเข้ารหัส ไม่มีใครเห็น</li><li>ลบความคิดเห็นของตัวเองได้</li></ul>
-</div>
-<small>© 2026 Duffy Review</small>
+<aside class="show">
+  <span class="brand"><i>D</i><span>Duffy <b>Review</b></span></span>
+  <div class="cols" id="cols" aria-hidden="true"></div>
+  <div class="sin">
+    <h2>สมัครฟรี<br>แล้วมาคุยเรื่องเกมกัน</h2>
+    <p>อ่านรีวิวได้ทุกเกม ให้ดาว แสดงความคิดเห็นในชื่อของคุณ และแต่งโปรไฟล์ของตัวเองได้</p>
+  </div>
 </aside>
 <main class="main">
+<button class="tg" id="tg" type="button" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด"></button>
 <form class="box" id="f" novalidate>
-<a class="logo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
+<a class="mlogo" href="login.html"><i>D</i><span>Duffy <b>Review</b></span></a>
 <h1>สร้างบัญชี</h1>
-<p class="sub">กรอกข้อมูลด้านล่างเพื่อสมัครสมาชิก</p>
-<label>ชื่อผู้ใช้ <small>ใช้ตอนเข้าสู่ระบบ</small><input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" autofocus><span class="hint" id="h-username">a-z, 0-9 หรือ _ ยาว 3–20 ตัว</span></label>
-<label>ชื่อที่แสดง <small>แสดงในความคิดเห็น</small><input name="name" autocomplete="nickname" maxlength="30"><span class="hint" id="h-name"></span></label>
-<label>รหัสผ่าน<div class="pw"><input name="password" type="password" autocomplete="new-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-password">อย่างน้อย 8 ตัวอักษร</span></label>
-<label>ยืนยันรหัสผ่าน<div class="pw"><input name="confirm" type="password" autocomplete="new-password" maxlength="100"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-confirm"></span></label>
-<button class="go" id="go">สมัครสมาชิก</button>
+<p class="sub">ไม่ต้องใช้อีเมล ใช้เวลาไม่ถึงนาที</p>
+<label>ชื่อผู้ใช้ <small>ใช้ตอนเข้าสู่ระบบ</small><div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><input name="username" autocomplete="username" maxlength="20" autocapitalize="off" spellcheck="false" placeholder="เช่น duffy_gamer" autofocus></div><span class="hint" id="h-username">a-z, 0-9 หรือ _ ยาว 3–20 ตัว</span></label>
+<label>ชื่อที่แสดง <small>แสดงในความคิดเห็น</small><div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><input name="name" autocomplete="nickname" maxlength="30" placeholder="ชื่อที่อยากให้คนอื่นเห็น"></div><span class="hint" id="h-name"></span></label>
+<label>รหัสผ่าน<div class="fi pw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="อย่างน้อย 8 ตัวอักษร"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-password">อย่างน้อย 8 ตัวอักษร</span></label>
+<label>ยืนยันรหัสผ่าน<div class="fi pw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="m9 15.5 2 2 4-4"/></svg><input name="confirm" type="password" autocomplete="new-password" maxlength="100" placeholder="พิมพ์รหัสผ่านอีกครั้ง"><button type="button" class="eye" data-eye>แสดง</button></div><span class="hint" id="h-confirm"></span></label>
+<button class="go" id="go"><span>สมัครสมาชิก</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 <div class="msg" id="msg" role="alert"></div>
 <div class="alt">มีบัญชีอยู่แล้ว? <a href="login.html" id="toLogin">เข้าสู่ระบบ</a></div>
 </form>
 </main>
 <script src="config.js"></script>
+<script src="auth-show.js"></script>
 <script>
 const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
 const KEY="duffy-member";
@@ -62,7 +65,7 @@ f.onsubmit=async e=>{
   e.preventDefault();msg.textContent='';
   const bad=Object.keys(rules).find(k=>check(k,true));
   if(bad){f[bad].focus();return;}
-  go.disabled=true;go.textContent='กำลังสมัคร...';
+  go.disabled=true;go.firstElementChild.textContent='กำลังสมัคร...';
   try{
     const r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({username:f.username.value.trim().toLowerCase(),name:f.name.value.trim(),password:f.password.value})});
@@ -75,7 +78,7 @@ f.onsubmit=async e=>{
     try{localStorage.setItem(KEY,d.token)}catch(_){}
     location.replace(next);
   }catch(_){msg.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่น 30–50 วินาที ลองใหม่อีกครั้ง)';}
-  finally{go.disabled=false;go.textContent='สมัครสมาชิก';}
+  finally{go.disabled=false;go.firstElementChild.textContent='สมัครสมาชิก';}
 };
 </script>
 </body>
