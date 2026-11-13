@@ -90,6 +90,9 @@ CREATE TABLE IF NOT EXISTS news (
   status    TEXT NOT NULL DEFAULT 'pending',
   reason    TEXT NOT NULL DEFAULT ''
 );
+-- คำแปลภาษาไทยของข่าวภาษาอังกฤษ (ว่าง = ยังไม่แปล หรือเป็นข่าวไทยอยู่แล้ว)
+ALTER TABLE news ADD COLUMN IF NOT EXISTS title_th TEXT NOT NULL DEFAULT '';
+ALTER TABLE news ADD COLUMN IF NOT EXISTS summary_th TEXT NOT NULL DEFAULT '';
 CREATE INDEX IF NOT EXISTS news_pub_idx ON news (published DESC);
 
 -- การตั้งค่าที่แก้จากหน้า admin (เช่น แหล่งข่าว คำต้องห้าม) เก็บเป็น JSON

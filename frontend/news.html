@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script>try{if(!localStorage.getItem('duffy-member')&&!localStorage.getItem('duffy-admin'))location.replace('login.html?next='+encodeURIComponent(location.pathname+location.search));}catch(_){}</script>
 <script>try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
 <style>
 /* หน้าข่าวสาร (ใช้ธีมจาก site.css) */
@@ -68,6 +68,7 @@
 .credit .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .credit .who b{color:var(--tx)}
 .lead .credit{margin-top:6px}
+.orig{font-size:12.5px;color:var(--mu);margin:-2px 0 8px;font-style:italic;overflow-wrap:anywhere}
 .imcap{position:absolute;right:8px;bottom:8px;z-index:2;background:rgba(10,12,24,.66);color:#fff;font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;backdrop-filter:blur(3px)}
 .srcbox{margin-top:30px;background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:18px 20px;box-shadow:var(--sh)}
 .srcbox h2{margin:0 0 4px;font-size:17px}
@@ -87,7 +88,7 @@
 </head>
 <body>
 <header><div class="wrap bar">
-  <a class="logo" href="./" aria-label="หน้าแรก Duffy Review"><i>D</i><span>Duffy <b>Review</b></span></a>
+  <a class="logo" href="./" aria-label="หน้าแรก Duffy Review"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
   <nav class="nav" aria-label="เมนูหลัก"><a class="nb" href="./">หน้าแรก</a><span class="nb on">ข่าวสาร</span></nav>
   <span class="sp" style="flex:1"></span>
   <button class="ib" id="theme" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด"></button>
@@ -101,7 +102,7 @@
   <div id="list"></div>
   <section class="srcbox" id="srcbox" hidden aria-labelledby="srcTitle">
     <h2 id="srcTitle">แหล่งข่าวที่ใช้</h2>
-    <p>ขอบคุณสำนักข่าวทุกแห่ง ข่าวทั้งหมดในหน้านี้มาจากเว็บไซต์ต่อไปนี้ กดเพื่อไปที่เว็บของแหล่งข่าว</p>
+    <p>ขอบคุณสำนักข่าวทุกแห่ง เราคัดข่าวเฉพาะจากสำนักข่าวที่เชื่อถือได้ต่อไปนี้ และทีมงานตรวจทุกข่าวก่อนขึ้นเว็บ ข่าวภาษาอังกฤษแปลเป็นไทยอัตโนมัติ อาจคลาดเคลื่อนได้ โปรดอ่านต้นฉบับประกอบ</p>
     <div class="srcs" id="srcs"></div>
   </section>
   <p class="note">หัวข้อ สรุป และรูปภาพเป็นลิขสิทธิ์ของแหล่งข่าวต้นทาง Duffy Review แสดงเพียงหัวข้อและสรุปสั้นพร้อมเครดิตและลิงก์ไปยังบทความต้นฉบับ</p>
@@ -157,12 +158,13 @@ async function loadMe(){
 let cat=new URLSearchParams(location.search).get('cat')||'',items=[],counts={},pending=null;
 if(!TYPES[cat])cat='';
 const pic=n=>{const [a,b]=GR[n.cat]||GR.game;return `<div class="im" style="--c1:${a};--c2:${b}">${esc(n.sourceName)}${n.image?`<img src="${esc(n.image)}" alt="ภาพประกอบข่าวจาก ${esc(n.sourceName)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.nextElementSibling&&this.nextElementSibling.remove();this.remove()"><span class="imcap">ภาพ: ${esc(n.sourceName)}</span>`:''}</div>`;};
-const meta=n=>`<div class="nmeta"><span class="src">${esc(n.sourceName)}</span><span class="ctag" style="--cc:${CC[n.cat]||'#7c4dff'}">${esc(n.catName)}</span><span>${ago(n.published)}</span>${n.lang==='en'?'<span class="en" title="ข่าวภาษาอังกฤษ">EN</span>':''}</div>`;
+const meta=n=>`<div class="nmeta"><span class="src">${esc(n.sourceName)}</span><span class="ctag" style="--cc:${CC[n.cat]||'#7c4dff'}">${esc(n.catName)}</span><span>${ago(n.published)}</span>${n.lang==='en'?(n.titleTh?`<span class="en" title="แปลอัตโนมัติจากต้นฉบับภาษาอังกฤษ: ${esc(n.title)}">แปลจาก EN</span>`:'<span class="en" title="ข่าวภาษาอังกฤษ (ยังไม่ได้แปล)">EN</span>'):''}</div>`;
 // เครดิตทุกข่าว: ที่มา (ชื่อสำนักข่าว + โดเมน) และปุ่มไปบทความต้นฉบับ
+const T=n=>n.titleTh||n.title,S=n=>n.titleTh?(n.summaryTh||''):n.summary;
 const credit=n=>`<div class="credit"><span class="who" title="ที่มา: ${esc(n.sourceName)}${n.sourceDomain?' ('+esc(n.sourceDomain)+')':''}">ที่มา: <b>${esc(n.sourceName)}</b>${n.sourceDomain?` · ${esc(n.sourceDomain)}`:''}</span><span class="more">อ่านต้นฉบับ${I.ext}</span></div>`;
 const link=n=>`href="${esc(n.link)}" target="_blank" rel="noopener noreferrer"`;
-const card=n=>`<a class="nc" ${link(n)}>${pic(n)}<div class="nbody">${meta(n)}<h3>${esc(n.title)}</h3><p>${esc(n.summary)}</p>${credit(n)}</div></a>`;
-const lead=n=>`<a class="lead" ${link(n)}>${pic(n)}<div class="lb">${meta(n)}<h2>${esc(n.title)}</h2><p>${esc(n.summary)}</p>${credit(n)}</div></a>`;
+const card=n=>`<a class="nc" ${link(n)}>${pic(n)}<div class="nbody">${meta(n)}<h3>${esc(T(n))}</h3><p>${esc(S(n))}</p>${credit(n)}</div></a>`;
+const lead=n=>`<a class="lead" ${link(n)}>${pic(n)}<div class="lb">${meta(n)}<h2>${esc(T(n))}</h2>${n.titleTh?`<div class="orig" lang="en">ต้นฉบับ: ${esc(n.title)}</div>`:''}<p>${esc(S(n))}</p>${credit(n)}</div></a>`;
 function renderSources(list){
   $('#srcbox').hidden=!list||!list.length;if(!list)return;
   $('#srcs').innerHTML=list.map(s=>`<a href="${esc(s.home)}" target="_blank" rel="noopener noreferrer"><b>${esc(s.name)}</b><small>${esc(s.domain)} · ${esc(s.cat)}</small>${I.ext}</a>`).join('');

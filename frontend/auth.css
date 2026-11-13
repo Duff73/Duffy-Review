@@ -41,6 +41,13 @@ svg{flex:none}
 .mlogo:hover{text-decoration:none}
 .mlogo i{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;color:#fff;font-style:normal;font-size:16px}
 .mlogo b{color:var(--ac)}
+.wm-ic{width:40px;height:40px;flex:none}
+.wm2{display:inline-flex;align-items:center;gap:8px;font:italic 900 24px/1 Prompt,system-ui,sans-serif;letter-spacing:-.01em}
+.wm2-a{color:var(--tx,#eef0f8)}
+.wm2-b{position:relative;z-index:0;color:#fff;font-size:.62em;letter-spacing:.12em;padding:6px 12px 6px 11px}
+.wm2-b::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:7px;background:linear-gradient(90deg,var(--ac,#ff6a2b),var(--ac2,#7c4dff));transform:skewX(-12deg);box-shadow:0 4px 12px rgba(124,77,255,.28)}
+@media (max-width:560px){.wm-ic{width:34px;height:34px}.wm2{font-size:20px}}
+.brand .wm2-a{color:#fff}
 h1{margin:0;font-size:30px;letter-spacing:-.01em;line-height:1.2}
 .sub{margin:-8px 0 6px;color:var(--mu);font-size:15px}
 label{display:grid;gap:6px;font-size:13.5px;font-weight:600;color:var(--tx)}

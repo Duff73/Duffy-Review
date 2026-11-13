@@ -87,6 +87,8 @@ CREATE TABLE IF NOT EXISTS news (
   fetched   DATETIME(3)   NOT NULL,
   status    VARCHAR(12)   NOT NULL DEFAULT 'pending',
   reason    VARCHAR(200)  NOT NULL DEFAULT '',
+  title_th  VARCHAR(600)  NOT NULL DEFAULT '',
+  summary_th TEXT         NULL,
   KEY news_pub_idx (published)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

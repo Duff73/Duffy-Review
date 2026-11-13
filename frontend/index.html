@@ -7,13 +7,13 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script>/* ยังไม่ได้เข้าสู่ระบบ -> ไปหน้าเข้าสู่ระบบทันที (ก่อนหน้าเว็บแสดง) */try{if(!localStorage.getItem('duffy-member')&&!localStorage.getItem('duffy-admin'))location.replace('login.html?next='+encodeURIComponent(location.pathname+location.hash));}catch(_){}</script>
 <script>/* โหมดสว่าง/มืดที่เคยเลือกไว้ */try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
 
 <header><div class="wrap bar">
-  <button class="logo" data-home aria-label="หน้าแรก Duffy Review"><i>D</i><span>Duffy <b>Review</b></span></button>
+  <button class="logo" data-home aria-label="หน้าแรก Duffy Review"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></button>
   <nav class="nav" aria-label="เมนูหลัก">
     <button class="nb on" id="homeBtn" data-home>หน้าแรก</button>
     <a class="nb" href="news.html">ข่าวสาร</a>
@@ -334,7 +334,7 @@ async function loadNewsBox(){
   if(document.hidden)return;
   try{const d=await api('/api/news?limit=5');
     $('#newsBox').hidden=!d.items.length;
-    $('#newsList').innerHTML=d.items.map(n=>`<a class="nwi" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer" title="อ่านต้นฉบับที่ ${esc(n.sourceName)}${n.sourceDomain?' ('+esc(n.sourceDomain)+')':''}"><span class="th">${n.image?`<img src="${esc(n.image)}" alt="ภาพจาก ${esc(n.sourceName)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</span><span class="n"><span>${esc(n.title)}</span><small>ที่มา: <b>${esc(n.sourceName)}</b> · ${agoS(n.published)}ที่แล้ว</small></span></a>`).join('');
+    $('#newsList').innerHTML=d.items.map(n=>`<a class="nwi" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer" title="อ่านต้นฉบับที่ ${esc(n.sourceName)}${n.sourceDomain?' ('+esc(n.sourceDomain)+')':''}"><span class="th">${n.image?`<img src="${esc(n.image)}" alt="ภาพจาก ${esc(n.sourceName)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</span><span class="n"><span>${esc(n.titleTh||n.title)}</span><small>ที่มา: <b>${esc(n.sourceName)}</b> · ${agoS(n.published)}ที่แล้ว</small></span></a>`).join('');
   }catch(_){}
 }
 loadNewsBox();setInterval(loadNewsBox,120000);

@@ -10,7 +10,7 @@ const URL_ = process.env.DATABASE_URL || "";
 const kind = !URL_ ? "file" : /^mysql/i.test(URL_) ? "mysql" : "postgres";
 const state = { games: [], views: {}, comments: [], ratings: {}, users: [], news: [], settings: {} };
 const iso = (d) => new Date(d).toISOString();
-const toNews = (r) => ({ id: r.id, source: r.source, cat: r.cat, lang: r.lang || "", title: r.title, summary: r.summary || "", link: r.link, image: r.image || "", published: iso(r.published), fetched: iso(r.fetched), status: r.status, reason: r.reason || "" });
+const toNews = (r) => ({ id: r.id, source: r.source, cat: r.cat, lang: r.lang || "", title: r.title, summary: r.summary || "", link: r.link, image: r.image || "", published: iso(r.published), fetched: iso(r.fetched), status: r.status, reason: r.reason || "", titleTh: r.title_th || "", summaryTh: r.summary_th || "" });
 
 const arr = (x) => { if (Array.isArray(x)) return x; try { return JSON.parse(x || "[]"); } catch (_) { return []; } };
 const toGame = (r) => ({
@@ -78,8 +78,9 @@ function pgAdapter() {
     // ---- ข่าวสาร + การตั้งค่า ----
     loadNews: async () => (await pool.query("SELECT * FROM news ORDER BY published DESC LIMIT 3000")).rows.map(toNews),
     saveNews: async (items) => { for (const n of items) await pool.query(
-      "INSERT INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (id) DO NOTHING",
-      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, n.published, n.fetched, n.status, n.reason]); },
+      "INSERT INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason, title_th, summary_th) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING",
+      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, n.published, n.fetched, n.status, n.reason, n.titleTh || "", n.summaryTh || ""]); },
+    setNewsTh: (id, t, s) => pool.query("UPDATE news SET title_th = $1, summary_th = $2 WHERE id = $3", [t, s, id]),
     setNewsStatus: (ids, status) => pool.query("UPDATE news SET status = $1, reason = '' WHERE id = ANY($2)", [status, ids]),
     pruneNews: (before) => pool.query("DELETE FROM news WHERE published < $1", [new Date(before)]),
     loadSettings: async () => Object.fromEntries((await pool.query("SELECT k, v FROM settings")).rows.map((r) => [r.k, obj(r.v)])),
@@ -112,6 +113,9 @@ function mysqlAdapter() {
       catch (e) { if (e.errno !== 1060) throw e; }
       // ฐานข้อมูลเดิม: เพิ่มคอลัมน์โปรไฟล์สมาชิก (ถ้ามีอยู่แล้วข้าม)
       try { await pool.query("ALTER TABLE users ADD COLUMN profile TEXT NULL"); }
+      catch (e) { if (e.errno !== 1060) throw e; }
+      // ฐานข้อมูลเดิม: เพิ่มคอลัมน์คำแปลภาษาไทยของข่าว (ถ้ามีอยู่แล้วข้าม)
+      try { await pool.query("ALTER TABLE news ADD COLUMN title_th VARCHAR(600) NOT NULL DEFAULT '', ADD COLUMN summary_th TEXT NULL"); }
       catch (e) { if (e.errno !== 1060) throw e; }
       const [rows] = await pool.query("SELECT COUNT(*) AS n FROM games");
       if (Number(rows[0].n) === 0) {
@@ -151,8 +155,9 @@ function mysqlAdapter() {
     // ---- ข่าวสาร + การตั้งค่า ----
     loadNews: async () => (await pool.query("SELECT * FROM news ORDER BY published DESC LIMIT 3000"))[0].map(toNews),
     saveNews: async (items) => { for (const n of items) await pool.query(
-      "INSERT IGNORE INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, new Date(n.published), new Date(n.fetched), n.status, n.reason]); },
+      "INSERT IGNORE INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason, title_th, summary_th) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, new Date(n.published), new Date(n.fetched), n.status, n.reason, n.titleTh || "", n.summaryTh || ""]); },
+    setNewsTh: (id, t, s) => pool.query("UPDATE news SET title_th = ?, summary_th = ? WHERE id = ?", [t, s, id]),
     setNewsStatus: (ids, status) => pool.query("UPDATE news SET status = ?, reason = '' WHERE id IN (?)", [status, ids]),
     pruneNews: (before) => pool.query("DELETE FROM news WHERE published < ?", [new Date(before)]),
     loadSettings: async () => Object.fromEntries((await pool.query("SELECT k, v FROM settings"))[0].map((r) => [r.k, obj(r.v)])),
@@ -266,6 +271,7 @@ async function updateUser(id, { name, profile }) {
 // ---- ข่าวสาร (state.news มีทุกสถานะ) + การตั้งค่า ----
 async function saveNews(items) { if (db) await db.saveNews(items); else fileSave(); }
 async function setNewsStatus(ids, status) { if (!ids.length) return; if (db) await db.setNewsStatus(ids, status); else setTimeout(fileSave, 0); }
+async function setNewsTh(n) { if (db) await db.setNewsTh(n.id, n.titleTh, n.summaryTh); else setTimeout(fileSave, 0); }
 async function pruneNews(before) {
   const n = state.news.length;
   state.news = state.news.filter((x) => Date.parse(x.published) >= before);
@@ -274,4 +280,4 @@ async function pruneNews(before) {
 }
 async function saveSetting(k, v) { if (db) await db.saveSetting(k, v); state.settings[k] = v; if (!db) fileSave(); }
 
-module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage, saveNews, setNewsStatus, pruneNews, saveSetting };
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage, saveNews, setNewsStatus, setNewsTh, pruneNews, saveSetting };

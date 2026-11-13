@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>ผู้ดูแล | Duffy Review</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f5f6fa;--sf:#fff;--tx:#14182b;--mu:#667085;--bd:#e3e6ef;--ac:#ff6a2b;--ac2:#7c4dff;--ok:#12a150;--er:#e5484d;--sh:0 4px 18px rgba(20,24,43,.08)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1120;--sf:#171b2e;--tx:#eef0f8;--mu:#9aa3bd;--bd:#2a3050;--sh:0 4px 18px rgba(0,0,0,.4);color-scheme:dark}}
@@ -29,6 +29,12 @@ label small{font-weight:400}
 .logo{font-weight:700;font-size:20px;display:flex;align-items:center;gap:8px;text-decoration:none}
 .logo i{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;color:#fff;font-style:normal;font-size:16px}
 .logo b{color:var(--ac)}
+.wm-ic{width:40px;height:40px;flex:none}
+.wm2{display:inline-flex;align-items:center;gap:8px;font:italic 900 24px/1 Prompt,system-ui,sans-serif;letter-spacing:-.01em}
+.wm2-a{color:var(--tx,#eef0f8)}
+.wm2-b{position:relative;z-index:0;color:#fff;font-size:.62em;letter-spacing:.12em;padding:6px 12px 6px 11px}
+.wm2-b::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:7px;background:linear-gradient(90deg,var(--ac,#ff6a2b),var(--ac2,#7c4dff));transform:skewX(-12deg);box-shadow:0 4px 12px rgba(124,77,255,.28)}
+@media (max-width:560px){.wm-ic{width:34px;height:34px}.wm2{font-size:20px}}
 .hide{display:none!important}
 .mu{color:var(--mu)}
 .msg{font-size:13px;min-height:20px}.msg.er{color:var(--er)}.msg.ok{color:var(--ok)}
@@ -109,6 +115,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 .nrow a.t:hover{color:var(--ac)}
 .nrow .meta{font-size:12px;color:var(--mu);display:flex;gap:8px;flex-wrap:wrap;margin:3px 0}
 .nrow .meta .why{color:var(--er)}
+.nrow .orig{font-size:12.5px;color:var(--mu);font-style:italic;margin-top:2px}
 .nrow p{margin:2px 0 0;font-size:13px;color:var(--mu);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .nrow .acts{display:flex;flex-direction:column;gap:6px}
 @media(max-width:700px){.nrow{grid-template-columns:auto 84px minmax(0,1fr)}.nth{width:84px}.nrow .acts{grid-column:1/-1;flex-direction:row;justify-content:flex-end}}
@@ -127,7 +134,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <!-- ===== หน้าเข้าสู่ระบบ ===== -->
 <section id="login" class="hide">
 <form class="lbox" id="lform" autocomplete="on">
-<a class="logo" href="./"><i>D</i><span>Duffy <b>Review</b></span></a>
+<a class="logo" href="./"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
 <h1>เข้าสู่ระบบผู้ดูแล</h1>
 <p class="mu">สำหรับเพิ่มและแก้ไขรีวิวเกม</p>
 <label>ชื่อผู้ใช้<input id="lu" name="username" autocomplete="username" required></label>
@@ -140,7 +147,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <!-- ===== หน้าจัดการ ===== -->
 <div id="app" class="hide">
 <header><div class="bar">
-<a class="logo" href="./" title="ไปหน้าเว็บ"><i>D</i><span>Duffy <b>Review</b></span></a>
+<a class="logo" href="./" title="ไปหน้าเว็บ"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
 <nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น</button><button class="tab" data-tab="users">สมาชิก</button><button class="tab" data-tab="news">ข่าวสาร <span id="npend"></span></button></nav>
 <span class="sp"></span>
 <span class="who" id="who"></span>
@@ -432,7 +439,7 @@ function renderNews(){
     :`<button class="btn sm ok" data-ns="approved" data-id="${n.id}">อนุมัติ</button><button class="btn sm" data-ns="pending" data-id="${n.id}">กลับไปรอตรวจ</button>`;
   $('#nlist').innerHTML=nitems.length?nitems.map(n=>`<div class="nrow ${nsel.has(n.id)?'sel':''}">${nst==='approved'?'<span></span>':`<input type="checkbox" data-pick="${n.id}" ${nsel.has(n.id)?'checked':''} aria-label="เลือกข่าวนี้">`}
 <div class="nth">${esc(n.sourceName)}${n.image?`<img src="${esc(n.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>
-<div><a class="t" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="meta"><b>${esc(n.sourceName)}</b><span>${esc(n.catName)}</span><span>${ago(n.published)}</span>${n.lang==='en'?'<span>ภาษาอังกฤษ</span>':''}${n.reason?`<span class="why">${esc(n.reason)}</span>`:''}</div><p>${esc(n.summary)}</p></div>
+<div><a class="t" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.titleTh||n.title)}</a>${n.titleTh?`<div class="orig">ต้นฉบับ: ${esc(n.title)}</div>`:''}<div class="meta"><b>${esc(n.sourceName)}</b><span>${esc(n.catName)}</span><span>${ago(n.published)}</span>${n.lang==='en'?(n.titleTh?'<span>แปลจากภาษาอังกฤษ</span>':'<span>ภาษาอังกฤษ (ยังไม่แปล)</span>'):''}${n.reason?`<span class="why">${esc(n.reason)}</span>`:''}</div><p>${esc(n.titleTh?(n.summaryTh||''):n.summary)}</p></div>
 <div class="acts">${acts(n)}</div></div>`).join(''):`<div class="empty">${nst==='pending'?'ไม่มีข่าวรอตรวจ กด "ดึงข่าวตอนนี้" เพื่อดึงข่าวใหม่':'ไม่มีข่าวในหมวดนี้'}</div>`;
 }
 async function setNews(ids,status){
@@ -461,7 +468,7 @@ const srow=(s,i)=>`<div class="srow" data-i="${i}"><label title="เปิดใ
 <select data-f="lang"><option value="th" ${s.lang!=='en'?'selected':''}>ไทย</option><option value="en" ${s.lang==='en'?'selected':''}>อังกฤษ</option></select>
 <label title="ข่าวจากแหล่งนี้ขึ้นเว็บทันทีโดยไม่ต้องตรวจ"><input type="checkbox" data-f="auto" ${s.auto?'checked':''}>อนุมัติอัตโนมัติ</label>
 <button class="btn sm dan" data-rm="${i}" aria-label="ลบแหล่งข่าว">ลบ</button></div>`;
-function readRows(){return [...document.querySelectorAll('#ncfg .srow')].map(r=>{const v=f=>r.querySelector(`[data-f="${f}"]`);return {id:ncfg.sources[+r.dataset.i]?.id||'',name:v('name').value,url:v('url').value,cat:v('cat').value,lang:v('lang').value,enabled:v('enabled').checked,auto:v('auto').checked};});}
+function readRows(){return [...document.querySelectorAll('#ncfg .srow')].map(r=>{const v=f=>r.querySelector(`[data-f="${f}"]`);return {id:ncfg.sources[+r.dataset.i]?.id||'',site:ncfg.sources[+r.dataset.i]?.site||'',name:v('name').value,url:v('url').value,cat:v('cat').value,lang:v('lang').value,enabled:v('enabled').checked,auto:v('auto').checked};});}
 function paintCfg(){
   $('#ncfg').innerHTML=`<h3>แหล่งข่าว (RSS)</h3><div class="srow shead"><span></span><span>ชื่อ</span><span>ลิงก์ RSS</span><span>หมวด</span><span>ภาษา</span><span></span><span></span></div>
 ${ncfg.sources.map(srow).join('')}<div><button class="btn sm" id="sadd">+ เพิ่มแหล่งข่าว</button></div>

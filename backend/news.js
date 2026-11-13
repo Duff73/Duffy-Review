@@ -4,6 +4,7 @@
 const crypto = require("crypto");
 const { XMLParser } = require("fast-xml-parser");
 const store = require("./store");
+const translate = require("./translate");
 const auth = require("./auth");
 const state = store.state;
 
@@ -12,22 +13,32 @@ const MAX_AGE_DAYS = 3;   // ไม่เก็บข่าวที่เก่
 const KEEP_DAYS = 30;     // ลบข่าวในระบบที่เก่ากว่านี้
 const CATS = { game: "เกม", tech: "ไอทีและดิจิทัล", hw: "ฮาร์ดแวร์คอมพิวเตอร์" };
 
+// คัดเฉพาะสำนักข่าวที่มีกองบรรณาธิการและมีชื่อเสียง (site = โดเมนของสำนักข่าว ลิงก์ข่าวต้องอยู่ในโดเมนนี้)
 const DEFAULT_SOURCES = [
-  { id: "gamingdose", name: "GamingDose", url: "https://www.gamingdose.com/feed/", cat: "game", lang: "th", enabled: true, auto: false },
-  { id: "blognone", name: "Blognone", url: "https://www.blognone.com/atom.xml", cat: "tech", lang: "th", enabled: true, auto: false },
-  { id: "beartai", name: "beartai", url: "https://www.beartai.com/feed", cat: "tech", lang: "th", enabled: true, auto: false },
-  { id: "ign", name: "IGN", url: "https://feeds.feedburner.com/ign/all", cat: "game", lang: "en", enabled: true, auto: false },
-  { id: "gamespot", name: "GameSpot", url: "https://www.gamespot.com/feeds/news/", cat: "game", lang: "en", enabled: true, auto: false },
-  { id: "pcgamer", name: "PC Gamer", url: "https://www.pcgamer.com/rss/", cat: "game", lang: "en", enabled: true, auto: false },
-  { id: "verge", name: "The Verge", url: "https://www.theverge.com/rss/index.xml", cat: "tech", lang: "en", enabled: true, auto: false },
-  { id: "tomshw", name: "Tom's Hardware", url: "https://www.tomshardware.com/feeds/all", cat: "hw", lang: "en", enabled: true, auto: false },
+  { id: "gamingdose", name: "GamingDose", url: "https://www.gamingdose.com/feed/", site: "gamingdose.com", cat: "game", lang: "th", enabled: true, auto: false },
+  { id: "blognone", name: "Blognone", url: "https://www.blognone.com/atom.xml", site: "blognone.com", cat: "tech", lang: "th", enabled: true, auto: false },
+  { id: "ign", name: "IGN", url: "https://feeds.feedburner.com/ign/all", site: "ign.com", cat: "game", lang: "en", enabled: true, auto: false },
+  { id: "gamespot", name: "GameSpot", url: "https://www.gamespot.com/feeds/news/", site: "gamespot.com", cat: "game", lang: "en", enabled: true, auto: false },
+  { id: "eurogamer", name: "Eurogamer", url: "https://www.eurogamer.net/feed", site: "eurogamer.net", cat: "game", lang: "en", enabled: true, auto: false },
+  { id: "pcgamer", name: "PC Gamer", url: "https://www.pcgamer.com/rss/", site: "pcgamer.com", cat: "game", lang: "en", enabled: true, auto: false },
+  { id: "verge", name: "The Verge", url: "https://www.theverge.com/rss/index.xml", site: "theverge.com", cat: "tech", lang: "en", enabled: true, auto: false },
+  { id: "arstechnica", name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", site: "arstechnica.com", cat: "tech", lang: "en", enabled: true, auto: false },
+  { id: "tomshw", name: "Tom's Hardware", url: "https://www.tomshardware.com/feeds/all", site: "tomshardware.com", cat: "hw", lang: "en", enabled: true, auto: false },
+  { id: "techpowerup", name: "TechPowerUp", url: "https://www.techpowerup.com/rss/news", site: "techpowerup.com", cat: "hw", lang: "en", enabled: true, auto: false },
 ];
+const CFG_VER = 2; // v2: เพิ่ม Eurogamer / Ars Technica / TechPowerUp, ปิด beartai (ฟีดไม่อัปเดตแล้ว)
 // คำที่เจอแล้วข่าวจะถูกกรองออกอัตโนมัติ (admin ดู/กู้คืนได้ในแท็บ "ถูกกรอง")
 const DEFAULT_BLOCK = ["คาสิโน", "บาคาร่า", "สล็อตออนไลน์", "เว็บพนัน", "พนันออนไลน์", "แทงบอล", "หวยออนไลน์", "casino", "gambling", "sportsbook", "porn", "xxx", "onlyfans", "nsfw", "airdrop"];
 
 const cfg = () => {
   const c = state.settings.news || {};
-  return { sources: Array.isArray(c.sources) ? c.sources : DEFAULT_SOURCES, block: Array.isArray(c.block) ? c.block : DEFAULT_BLOCK };
+  let sources = Array.isArray(c.sources) ? c.sources : DEFAULT_SOURCES;
+  if (Array.isArray(c.sources) && !(c.ver >= CFG_VER)) { // ค่าที่ admin บันทึกไว้ก่อน v2: เติมแหล่งใหม่ + ใส่โดเมนให้แหล่งเดิม
+    const def = new Map(DEFAULT_SOURCES.map((s) => [s.id, s]));
+    sources = sources.map((s) => ({ ...s, site: s.site || (def.get(s.id) || {}).site || "", enabled: s.id === "beartai" ? false : s.enabled }));
+    for (const d of DEFAULT_SOURCES) if (!sources.some((s) => s.id === d.id)) sources.push(d);
+  }
+  return { sources, block: Array.isArray(c.block) ? c.block : DEFAULT_BLOCK };
 };
 
 /* ---------- อ่าน RSS / Atom ---------- */
@@ -77,11 +88,14 @@ function parseFeed(xml) {
 }
 
 /* ---------- กรองข่าว ---------- */
+// โพสต์ขายของ/ดีลลดราคา/สปอนเซอร์ ไม่ใช่ข่าว
+const PROMO = /\b(deals?|on sale|\d+% off|coupons?|promo codes?|sponsored|giveaway|black friday|cyber monday|prime day|lowest price|save \$\d+|for just \$\d+|only \$\d+|exclusively at|lifetime (access|subscription|license))\b|\$\d+(\.\d\d)?\s*\(MSRP|ลดราคา|โปรโมชั่น|ส่วนลด|ดีลเด็ด/i;
 const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function screen(item, block) {
   const hay = (item.title + " " + item.summary).toLowerCase();
   const hit = block.find((w) => w && hay.includes(String(w).toLowerCase()));
   if (hit) return "มีคำต้องห้าม: " + hit;
+  if (PROMO.test(item.title)) return "โพสต์ดีลลดราคา/โฆษณา";
   const t = norm(item.title), since = Date.now() - MAX_AGE_DAYS * 86400000;
   if (t.length > 8 && state.news.some((n) => norm(n.title) === t && Date.parse(n.published) > since)) return "ข่าวซ้ำกับที่มีอยู่แล้ว";
   return "";
@@ -116,6 +130,9 @@ async function runFetch() {
           const t = Date.parse(it.date);
           const published = new Date(isNaN(t) ? Date.now() : Math.min(t, Date.now())).toISOString();
           if (Date.parse(published) < minDate) continue;
+          // ลิงก์ต้องพาไปที่เว็บของสำนักข่าวนั้นจริง ๆ (กันฟีดที่แอบใส่ลิงก์ไปเว็บอื่น)
+          const h = host(it.link);
+          if (src.site && h !== src.site && !h.endsWith("." + src.site)) continue;
           const n = { id, source: src.id, cat: src.cat, lang: src.lang || "", title: cut(it.title, 300), summary: cut(cleanSummary(it.summary, it.title), 280), link: it.link, image: it.image || "", published, fetched: new Date().toISOString(), status: "pending", reason: "" };
           const why = screen(n, block);
           if (why) { n.status = "filtered"; n.reason = why; filtered++; } else if (src.auto) n.status = "approved";
@@ -127,17 +144,33 @@ async function runFetch() {
       }
     }
     if (fresh.length) await store.saveNews(fresh);
+    const tr = await translatePending();
     await store.pruneNews(Date.now() - KEEP_DAYS * 86400000);
-    lastRun = { at: new Date().toISOString(), report };
-    console.log(`news: +${fresh.length} (${report.filter((r) => !r.ok).length} sources failed)`);
+    lastRun = { at: new Date().toISOString(), report, translated: tr };
+    console.log(`news: +${fresh.length} (${report.filter((r) => !r.ok).length} sources failed), translated ${tr.done}/${tr.tried} via ${tr.provider}`);
     return lastRun;
   })().finally(() => { running = null; });
   return running;
 }
 
+/* ---------- แปลข่าวภาษาอังกฤษเป็นไทย ---------- */
+// แปลเฉพาะข่าวที่จะขึ้นเว็บ (รอตรวจ/อนุมัติ) ที่ยังไม่มีคำแปล ใหม่สุดก่อน รอบละไม่เกิน 40 ข่าว ที่เหลือแปลรอบถัดไป
+async function translatePending(limit = 40) {
+  const p = translate.provider();
+  const todo = p === "off" ? [] : state.news.filter((n) => n.lang === "en" && !n.titleTh && (n.status === "pending" || n.status === "approved")).sort(byNew).slice(0, limit);
+  const out = await translate.translateItems(todo);
+  let done = 0;
+  for (let i = 0; i < todo.length; i++) {
+    if (!out[i]) continue;
+    Object.assign(todo[i], out[i]);
+    try { await store.setNewsTh(todo[i]); done++; } catch (e) { console.error("save translation failed:", e.message); }
+  }
+  return { provider: p, tried: todo.length, done };
+}
+
 /* ---------- ส่งออกให้หน้าเว็บ ---------- */
 const srcName = (id) => (cfg().sources.find((s) => s.id === id) || {}).name || id;
-const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return ""; } };
+function host(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return ""; } }
 // เครดิตแหล่งที่มา: ชื่อสำนักข่าว + โดเมนของบทความต้นฉบับ + หน้าแรกของเว็บนั้น
 const view = (n) => {
   const d = host(n.link);
@@ -150,7 +183,7 @@ function creditList() {
   return [...seen.values()].map((v) => ({ name: v.sourceName, domain: v.sourceDomain, home: v.sourceHome, cat: v.catName }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
-const byNew = (a, b) => b.published.localeCompare(a.published);
+function byNew(a, b) { return b.published.localeCompare(a.published); }
 
 function register(app) {
   // ข่าวที่อนุมัติแล้ว (ต้องล็อกอินตามกฎของเว็บ)
@@ -186,7 +219,7 @@ function register(app) {
   app.post("/api/admin/news/fetch", auth.requireAdmin, async (_, res) => {
     try { res.json(await runFetch()); } catch (e) { res.status(500).json({ error: e.message }); }
   });
-  app.get("/api/admin/news/config", auth.requireAdmin, (_, res) => res.json({ ...cfg(), cats: CATS, interval: INTERVAL / 60000 }));
+  app.get("/api/admin/news/config", auth.requireAdmin, (_, res) => res.json({ ...cfg(), cats: CATS, interval: INTERVAL / 60000, translator: translate.provider() }));
   app.put("/api/admin/news/config", auth.requireAdmin, async (req, res) => {
     const b = req.body || {};
     if (!Array.isArray(b.sources) || b.sources.length > 40) return res.status(400).json({ error: "รายการแหล่งข่าวไม่ถูกต้อง" });
@@ -199,10 +232,11 @@ function register(app) {
       let id = String(s.id || "").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 20) || "src" + sources.length;
       while (seen.has(id)) id += "x";
       seen.add(id);
-      sources.push({ id, name, url, cat: s.cat, lang: s.lang === "en" ? "en" : "th", enabled: !!s.enabled, auto: !!s.auto });
+      const site = String(s.site || "").trim().toLowerCase().replace(/^www\./, "");
+      sources.push({ id, name, url, site: /^[a-z0-9.-]+\.[a-z]{2,}$/.test(site) ? site : "", cat: s.cat, lang: s.lang === "en" ? "en" : "th", enabled: !!s.enabled, auto: !!s.auto });
     }
     const block = (Array.isArray(b.block) ? b.block : String(b.block || "").split(/[\n,]/)).map((w) => String(w).trim()).filter(Boolean).slice(0, 300);
-    try { await store.saveSetting("news", { sources, block }); res.json({ ...cfg(), cats: CATS }); }
+    try { await store.saveSetting("news", { ver: CFG_VER, sources, block }); res.json({ ...cfg(), cats: CATS }); }
     catch (e) { console.error("news config failed:", e.message); res.status(500).json({ error: "บันทึกไม่สำเร็จ" }); }
   });
 }
@@ -213,4 +247,4 @@ function start() {
   setInterval(() => runFetch().catch((e) => console.error("news fetch failed:", e.message)), INTERVAL).unref();
 }
 
-module.exports = { register, start, runFetch, parseFeed };
+module.exports = { register, start, runFetch, parseFeed, translatePending };

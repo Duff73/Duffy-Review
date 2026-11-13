@@ -72,7 +72,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "news-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "news-th-v2", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
