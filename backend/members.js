@@ -62,7 +62,21 @@ setInterval(() => { const now = Date.now(); for (const [k, a] of regHits) if (!a
 
 const issue = (u) => ({ token: auth.sign({ r: "member", uid: u.id }, auth.MEMBER_TTL), user: pub(u) });
 
+// ตรวจชื่อผู้ใช้ซ้ำระหว่างพิมพ์ในหน้าสมัคร (จำกัด 60 ครั้ง/นาที/IP)
+const checkHits = new Map();
+setInterval(() => { const now = Date.now(); for (const [k, a] of checkHits) if (!a.some((t) => now - t < 60000)) checkHits.delete(k); }, 300000).unref();
+
 function register(app) {
+  app.get("/api/auth/username-check", (req, res) => {
+    const now = Date.now();
+    const a = (checkHits.get(req.ip) || []).filter((t) => now - t < 60000);
+    if (a.length >= 60) return res.status(429).json({ error: "ตรวจถี่เกินไป" });
+    a.push(now); checkHits.set(req.ip, a);
+    const username = String(req.query.u || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) return res.json({ valid: false, available: false });
+    res.json({ valid: true, available: !byName(username) });
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     const b = req.body || {};
     const username = String(b.username || "").trim().toLowerCase();

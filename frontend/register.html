@@ -58,7 +58,30 @@ function check(k,show){
   h.className='hint '+(err?'er':'ok');h.textContent=err||okText[k];f[k].classList.toggle('bad',!!err);
   return err;
 }
-for(const k in rules)f[k].addEventListener('input',()=>{check(k);if(k==='password'&&f.confirm.value)check('confirm');});
+// ตรวจว่าชื่อผู้ใช้ซ้ำกับคนอื่นไหม (หน่วงหลังหยุดพิมพ์ 0.35 วินาที)
+const taken=new Set(),free=new Set();let ct=0,cseq=0;
+const hU=document.getElementById('h-username');
+function setU(cls,t,bad){hU.className='hint '+cls;hU.textContent=t;f.username.classList.toggle('bad',!!bad);}
+function checkTaken(){
+  clearTimeout(ct);const u=f.username.value.trim().toLowerCase();
+  if(!/^[a-z0-9_]{3,20}$/.test(u))return;
+  if(taken.has(u))return setU('er','ชื่อผู้ใช้ "'+u+'" มีคนใช้แล้ว ลองชื่ออื่น',true);
+  if(free.has(u))return setU('ok','ใช้ชื่อนี้ได้');
+  setU('','กำลังตรวจว่าชื่อนี้ว่างไหม...');
+  const my=++cseq;
+  ct=setTimeout(async()=>{
+    try{
+      const d=await (await fetch(API+'/api/auth/username-check?u='+encodeURIComponent(u))).json();
+      if(d.valid)(d.available?free:taken).add(u);
+    }catch(_){}
+    if(my===cseq&&f.username.value.trim().toLowerCase()===u){
+      if(taken.has(u))setU('er','ชื่อผู้ใช้ "'+u+'" มีคนใช้แล้ว ลองชื่ออื่น',true);
+      else setU('ok','ใช้ชื่อนี้ได้');
+    }
+  },350);
+}
+rules.username=(base=>v=>base(v)||(taken.has(v.trim().toLowerCase())?'ชื่อผู้ใช้นี้มีคนใช้แล้ว ลองชื่ออื่น':''))(rules.username);
+for(const k in rules)f[k].addEventListener('input',()=>{check(k);if(k==='username')checkTaken();if(k==='password'&&f.confirm.value)check('confirm');});
 for(const k in rules)f[k].addEventListener('blur',()=>{if(f[k].value)check(k,true);});
 
 f.onsubmit=async e=>{
@@ -71,6 +94,7 @@ f.onsubmit=async e=>{
       body:JSON.stringify({username:f.username.value.trim().toLowerCase(),name:f.name.value.trim(),password:f.password.value})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok){
+      if(r.status===409&&d.field==='username')taken.add(f.username.value.trim().toLowerCase());
       if(d.field&&f[d.field]){const h=document.getElementById('h-'+d.field);h.className='hint er';h.textContent=d.error;f[d.field].classList.add('bad');f[d.field].focus();}
       else msg.textContent=d.error||('เกิดข้อผิดพลาด ('+r.status+')');
       return;
