@@ -16,34 +16,17 @@
 .nhead p{margin:4px 0 0;color:var(--mu);font-size:14px}
 .nhead h1 .bar{display:inline-block;width:6px;height:.9em;border-radius:3px;background:var(--cc,var(--ac));margin-right:10px;vertical-align:-2px}
 /* แท็บประเภทข่าว */
-/* แถบหมวดแบบ Liquid Glass: กระจกฝ้าลอยติดใต้หัวเว็บ + เม็ดกระจกที่ไหลไปหาหมวดที่เลือก */
-.ntabs{--gl:rgba(255,255,255,.55);--gb:rgba(255,255,255,.7);--gs:0 10px 30px rgba(20,24,43,.10);position:sticky;top:76px;z-index:20;margin:0 0 22px;padding:6px;border-radius:999px;overflow-x:auto;scrollbar-width:none;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--sf) 62%,transparent),color-mix(in srgb,var(--sf) 38%,transparent));
-  -webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);
-  border:1px solid var(--gb);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -1px 0 rgba(255,255,255,.12),var(--gs)}
-:root[data-theme="dark"] .ntabs{--gb:rgba(255,255,255,.14);--gs:0 14px 40px rgba(0,0,0,.45)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ntabs{--gb:rgba(255,255,255,.14);--gs:0 14px 40px rgba(0,0,0,.45)}}
+.ntabs{position:relative;display:flex;gap:4px;padding:5px;margin-bottom:22px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow-x:auto;scrollbar-width:none}
 .ntabs::-webkit-scrollbar{display:none}
-.ntrack{position:relative;display:flex;gap:4px;min-width:100%}
-.glass{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:999px;pointer-events:none;opacity:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.08) 55%,rgba(255,255,255,.18)),color-mix(in srgb,var(--gc,#ff6a2b) 26%,transparent);
-  border:1px solid rgba(255,255,255,.55);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -2px 6px color-mix(in srgb,var(--gc,#ff6a2b) 30%,transparent),0 6px 18px color-mix(in srgb,var(--gc,#ff6a2b) 28%,transparent);
-  -webkit-backdrop-filter:blur(6px) saturate(220%);backdrop-filter:blur(6px) saturate(220%);
-  transition:left .55s cubic-bezier(.3,1.45,.45,1),width .55s cubic-bezier(.3,1.45,.45,1),background-color .4s,box-shadow .4s,opacity .2s}
-.glass::after{content:"";position:absolute;inset:1px 18% auto;height:38%;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0))}
-.glass.go{opacity:1}
-.nt{position:relative;z-index:1;flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:999px;color:var(--mu);font:inherit;font-size:14px;font-weight:600;white-space:nowrap;transition:color .25s,transform .25s}
-.nt:hover{color:var(--tx)}
-.nt:active{transform:scale(.96)}
+.nt{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:10px;color:var(--mu);font:inherit;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,color .15s}
+.nt:hover{background:var(--sf2);color:var(--tx)}
 .nt .ic{display:grid;place-items:center;color:var(--cc)}
 .nt .ic svg{width:18px;height:18px}
-.nt .n{min-width:24px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--tx) 8%,transparent);color:var(--mu);font-size:12px;font-weight:600;text-align:center;transition:background .3s,color .3s}
-.nt.on{color:var(--tx)}
-.nt.on .n{background:var(--cc);color:#fff;box-shadow:0 2px 8px color-mix(in srgb,var(--cc) 45%,transparent)}
+.nt .n{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--sf2);color:var(--mu);font-size:12px;font-weight:600;text-align:center}
+.nt.on{background:color-mix(in srgb,var(--cc) 14%,var(--sf));color:var(--tx);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc) 45%,transparent)}
+.nt.on .n{background:var(--cc);color:#fff}
 .nt.zero .n{opacity:.6}
-@media(max-width:640px){.ntabs{top:64px}.nt{flex:0 0 auto;padding:9px 13px;font-size:13.5px}}
-@media(prefers-reduced-motion:reduce){.glass{transition:none}}
+@media(max-width:640px){.nt{flex:0 0 auto;padding:8px 12px;font-size:13.5px}}
 /* ช่วงข่าวตามประเภท (หน้า "ทั้งหมด") */
 .nsec{margin-bottom:34px}
 .nsec .sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -116,7 +99,7 @@
 <main class="wrap">
   <div class="nhead"><div><h1 id="ttl">ข่าวสาร</h1><p id="sub">คัดจากสำนักข่าวไทยและต่างประเทศ ตรวจโดยทีมงานก่อนขึ้นเว็บ</p></div>
     <span class="live"><i></i><span id="upd">กำลังโหลด...</span></span></div>
-  <nav class="ntabs" id="tabbar" aria-label="ประเภทข่าว"><div class="ntrack"><span class="glass" id="glass" aria-hidden="true"></span><div id="tabs" style="display:contents"></div></div></nav>
+  <nav class="ntabs" id="tabs" aria-label="ประเภทข่าว"></nav>
   <div id="list"></div>
   <section class="srcbox" id="srcbox" hidden aria-labelledby="srcTitle">
     <h2 id="srcTitle">แหล่งข่าวที่ใช้</h2>
@@ -188,22 +171,13 @@ function renderSources(list){
   $('#srcs').innerHTML=list.map(s=>`<a href="${esc(s.home)}" target="_blank" rel="noopener noreferrer"><b>${esc(s.name)}</b><small>${esc(s.domain)} · ${esc(s.cat)}</small>${I.ext}</a>`).join('');
 }
 const total=()=>Object.values(counts).reduce((a,b)=>a+b,0);
-// เม็ดกระจกเลื่อนไปอยู่ใต้หมวดที่เลือก (ครั้งแรกวางทันที ไม่เลื่อน)
-function placeGlass(){
-  const bar=$('#tabbar'),g=$('#glass'),on=bar.querySelector('.nt.on');if(!on)return;
-  if(!g.classList.contains('go')){g.style.transition='none';requestAnimationFrame(()=>requestAnimationFrame(()=>g.style.transition=''));}
-  g.style.left=on.offsetLeft+'px';g.style.width=on.offsetWidth+'px';g.style.setProperty('--gc',on.style.getPropertyValue('--cc'));g.classList.add('go');
-  if(bar.scrollWidth>bar.clientWidth)bar.scrollTo({left:on.offsetLeft-(bar.clientWidth-on.offsetWidth)/2,behavior:g.style.transition==='none'?'auto':'smooth'});
-}
-addEventListener('resize',()=>placeGlass());
-document.fonts&&document.fonts.ready.then(()=>placeGlass());
 function renderHead(){
   const t=TYPES[cat];
   document.documentElement.style.setProperty('--cc',t.cc);
   $('#ttl').innerHTML=`<span class="bar"></span>${esc(t.title)}`;$('#sub').textContent=t.sub;
   document.title=`${t.title} | Duffy Review`;
   $('#tabs').innerHTML=Object.entries(TYPES).map(([k,v])=>`${(()=>{const c=k?(counts[k]||0):total();return `<button class="nt ${k===cat?'on':''} ${c?'':'zero'}" data-c="${k}" style="--cc:${v.cc}" aria-pressed="${k===cat}" title="${esc(v.tab)} ${c} ข่าว"><span class="ic">${v.ic}</span>${esc(v.tab)}<span class="n">${c}</span></button>`})()}`).join('');
-  placeGlass();
+  {const tb=$('#tabs'),on=tb.querySelector('.on');if(on&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=on.offsetLeft-(tb.clientWidth-on.offsetWidth)/2;}
 }
 function render(){
   renderHead();
