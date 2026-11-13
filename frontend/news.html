@@ -16,16 +16,17 @@
 .nhead p{margin:4px 0 0;color:var(--mu);font-size:14px}
 .nhead h1 .bar{display:inline-block;width:6px;height:.9em;border-radius:3px;background:var(--cc,var(--ac));margin-right:10px;vertical-align:-2px}
 /* แท็บประเภทข่าว */
-.ntabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:22px}
-.nt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--sf);border:1.5px solid var(--bd);text-align:left;transition:border-color .15s,box-shadow .15s,transform .15s}
-.nt:hover{border-color:color-mix(in srgb,var(--cc) 55%,var(--bd));transform:translateY(-2px)}
-.nt .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--cc) 14%,transparent);color:var(--cc)}
-.nt .ic svg{width:21px;height:21px}
-.nt b{display:block;font-size:14.5px;line-height:1.3}
-.nt small{color:var(--mu);font-size:12.5px}
-.nt.on{border-color:var(--cc);box-shadow:0 8px 22px color-mix(in srgb,var(--cc) 22%,transparent)}
-.nt.on .ic{background:var(--cc);color:#fff}
-@media(max-width:860px){.ntabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ntabs{position:relative;display:flex;gap:4px;padding:5px;margin-bottom:22px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow-x:auto;scrollbar-width:none}
+.ntabs::-webkit-scrollbar{display:none}
+.nt{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:10px;color:var(--mu);font:inherit;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,color .15s}
+.nt:hover{background:var(--sf2);color:var(--tx)}
+.nt .ic{display:grid;place-items:center;color:var(--cc)}
+.nt .ic svg{width:18px;height:18px}
+.nt .n{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--sf2);color:var(--mu);font-size:12px;font-weight:600;text-align:center}
+.nt.on{background:color-mix(in srgb,var(--cc) 14%,var(--sf));color:var(--tx);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc) 45%,transparent)}
+.nt.on .n{background:var(--cc);color:#fff}
+.nt.zero .n{opacity:.6}
+@media(max-width:640px){.nt{flex:0 0 auto;padding:8px 12px;font-size:13.5px}}
 /* ช่วงข่าวตามประเภท (หน้า "ทั้งหมด") */
 .nsec{margin-bottom:34px}
 .nsec .sh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -175,7 +176,8 @@ function renderHead(){
   document.documentElement.style.setProperty('--cc',t.cc);
   $('#ttl').innerHTML=`<span class="bar"></span>${esc(t.title)}`;$('#sub').textContent=t.sub;
   document.title=`${t.title} | Duffy Review`;
-  $('#tabs').innerHTML=Object.entries(TYPES).map(([k,v])=>`<button class="nt ${k===cat?'on':''}" data-c="${k}" style="--cc:${v.cc}" aria-pressed="${k===cat}"><span class="ic">${v.ic}</span><span><b>${esc(v.tab)}</b><small>${k?(counts[k]||0):total()} ข่าว</small></span></button>`).join('');
+  $('#tabs').innerHTML=Object.entries(TYPES).map(([k,v])=>`${(()=>{const c=k?(counts[k]||0):total();return `<button class="nt ${k===cat?'on':''} ${c?'':'zero'}" data-c="${k}" style="--cc:${v.cc}" aria-pressed="${k===cat}" title="${esc(v.tab)} ${c} ข่าว"><span class="ic">${v.ic}</span>${esc(v.tab)}<span class="n">${c}</span></button>`})()}`).join('');
+  {const tb=$('#tabs'),on=tb.querySelector('.on');if(on&&tb.scrollWidth>tb.clientWidth)tb.scrollLeft=on.offsetLeft-(tb.clientWidth-on.offsetWidth)/2;}
 }
 function render(){
   renderHead();
