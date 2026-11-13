@@ -93,6 +93,33 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 .edf .msg{flex:1}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;z-index:99;box-shadow:var(--sh);opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
+/* ---------- ข่าวสาร ---------- */
+.stabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.stab{border:1px solid var(--bd);background:var(--sf);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500}
+.stab.on{background:var(--tx);color:var(--sf);border-color:var(--tx)}
+.stab b{margin-left:4px}
+.nbulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+.nbulk label{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-weight:500}
+.nbulk input,.nrow input[type=checkbox],.srow input[type=checkbox]{width:auto;accent-color:var(--ac)}
+.nrow{display:grid;grid-template-columns:auto 120px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:10px}
+.nrow.sel{border-color:var(--ac)}
+.nth{position:relative;width:120px;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:linear-gradient(135deg,var(--ac2),var(--ac));display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;text-align:center;padding:4px}
+.nth img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nrow a.t{font-weight:600;font-size:15px;line-height:1.35;display:block}
+.nrow a.t:hover{color:var(--ac)}
+.nrow .meta{font-size:12px;color:var(--mu);display:flex;gap:8px;flex-wrap:wrap;margin:3px 0}
+.nrow .meta .why{color:var(--er)}
+.nrow p{margin:2px 0 0;font-size:13px;color:var(--mu);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nrow .acts{display:flex;flex-direction:column;gap:6px}
+@media(max-width:700px){.nrow{grid-template-columns:auto 84px minmax(0,1fr)}.nth{width:84px}.nrow .acts{grid-column:1/-1;flex-direction:row;justify-content:flex-end}}
+.ncfg{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:16px;display:grid;gap:12px}
+.ncfg h3{margin:0;font-size:16px}
+.srow{display:grid;grid-template-columns:auto 140px minmax(0,1fr) 150px 80px auto auto;gap:8px;align-items:center}
+.srow label{display:flex;flex-direction:row;align-items:center;gap:4px;font-size:12px;white-space:nowrap}
+.srow input,.srow select{padding:7px 9px;font-size:13px}
+.shead{font-size:12px;color:var(--mu);font-weight:600}
+@media(max-width:900px){.srow{grid-template-columns:auto 1fr 1fr;}.srow .u{grid-column:1/-1}.shead{display:none}}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 </style>
 </head>
 <body>
@@ -114,7 +141,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <div id="app" class="hide">
 <header><div class="bar">
 <a class="logo" href="./" title="ไปหน้าเว็บ"><i>D</i><span>Duffy <b>Review</b></span></a>
-<nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น</button><button class="tab" data-tab="users">สมาชิก</button></nav>
+<nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น</button><button class="tab" data-tab="users">สมาชิก</button><button class="tab" data-tab="news">ข่าวสาร <span id="npend"></span></button></nav>
 <span class="sp"></span>
 <span class="who" id="who"></span>
 <a class="btn sm" href="./" target="_blank" rel="noopener">ดูหน้าเว็บ</a>
@@ -132,6 +159,13 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <section id="tab-users" class="hide">
 <div class="tool"><h2>สมาชิกทั้งหมด <small class="mu" id="ucount"></small></h2><input id="uq" type="search" placeholder="ค้นหาชื่อผู้ใช้ / ชื่อที่แสดง..."></div>
 <div class="list" id="ulist"></div>
+</section>
+<section id="tab-news" class="hide">
+<div class="tool"><h2>ข่าวสาร</h2><span class="mu" id="nlast" style="font-size:13px"></span><button class="btn" id="ncfgBtn">ตั้งค่าแหล่งข่าว / คำต้องห้าม</button><button class="btn pri" id="nfetch">ดึงข่าวตอนนี้</button></div>
+<div class="ncfg hide" id="ncfg"></div>
+<div class="stabs" id="nst"></div>
+<div class="nbulk" id="nbulk"><label><input type="checkbox" id="nall"> เลือกทั้งหมด</label><span class="mu" id="nsel"></span><span class="sp" style="flex:1"></span><button class="btn sm ok" data-bulk="approved">อนุมัติที่เลือก</button><button class="btn sm dan" data-bulk="rejected">ไม่อนุมัติที่เลือก</button></div>
+<div class="list" id="nlist"></div>
 </section>
 </main>
 </div>
@@ -209,6 +243,7 @@ $('#logout').onclick=async()=>{
 async function start(){
   show('app');$('#who').textContent='ผู้ใช้: '+session.user;
   await Promise.all([loadGames(),loadComments()]).catch(()=>{});
+  api('/api/admin/news?status=pending').then(d=>{$('#npend').textContent=d.counts.pending?`(${d.counts.pending})`:'';}).catch(()=>{});
 }
 
 // ---------- tabs ----------
@@ -217,8 +252,10 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   $('#tab-games').classList.toggle('hide',t.dataset.tab!=='games');
   $('#tab-comments').classList.toggle('hide',t.dataset.tab!=='comments');
   $('#tab-users').classList.toggle('hide',t.dataset.tab!=='users');
+  $('#tab-news').classList.toggle('hide',t.dataset.tab!=='news');
   if(t.dataset.tab==='comments')loadComments().catch(()=>{});
   if(t.dataset.tab==='users')loadUsers();
+  if(t.dataset.tab==='news')loadNews();
 });
 
 // ---------- games ----------
@@ -371,6 +408,79 @@ $('#ulist').onclick=async e=>{
   b.disabled=true;
   try{await api('/api/admin/users/'+u.id,{method:'DELETE'});toast('ลบสมาชิก “'+u.name+'” แล้ว');loadUsers();loadComments().catch(()=>{});loadGames();}
   catch(err){b.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}
+};
+
+// ---------- ข่าวสาร: คิวตรวจข่าวก่อนขึ้นเว็บ ----------
+const NST=[['pending','รอตรวจ'],['approved','ขึ้นเว็บแล้ว'],['rejected','ไม่อนุมัติ'],['filtered','ถูกกรองอัตโนมัติ']];
+const CATN={game:'เกม',tech:'ไอทีและดิจิทัล',hw:'ฮาร์ดแวร์คอมพิวเตอร์'};
+let nst='pending',nitems=[],nsel=new Set();
+const ago=d=>{const s=(Date.now()-new Date(d))/1000;if(s<60)return 'เมื่อสักครู่';if(s<3600)return Math.floor(s/60)+' นาทีที่แล้ว';if(s<86400)return Math.floor(s/3600)+' ชั่วโมงที่แล้ว';return Math.floor(s/86400)+' วันที่แล้ว';};
+async function loadNews(){
+  $('#nlist').innerHTML='<div class="empty">กำลังโหลด...</div>';
+  try{const d=await api('/api/admin/news?status='+nst);nitems=d.items;nsel=new Set();
+    $('#nst').innerHTML=NST.map(([k,l])=>`<button class="stab ${k===nst?'on':''}" data-st="${k}">${l}<b>${d.counts[k]||0}</b></button>`).join('');
+    $('#npend').textContent=d.counts.pending?`(${d.counts.pending})`:'';
+    $('#nlast').textContent=d.running?'กำลังดึงข่าว...':d.lastRun?`ดึงล่าสุด ${ago(d.lastRun.at)}`:'ยังไม่ได้ดึงข่าวตั้งแต่เซิร์ฟเวอร์เริ่ม';
+    renderNews();}
+  catch(e){if(e.message!=='unauthorized')$('#nlist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;}
+}
+function renderNews(){
+  $('#nbulk').classList.toggle('hide',!nitems.length||nst==='approved');
+  $('#nall').checked=nitems.length&&nsel.size===nitems.length;$('#nsel').textContent=nsel.size?`เลือกแล้ว ${nsel.size} ข่าว`:'';
+  const acts=n=>nst==='pending'?`<button class="btn sm ok" data-ns="approved" data-id="${n.id}">อนุมัติ</button><button class="btn sm dan" data-ns="rejected" data-id="${n.id}">ไม่อนุมัติ</button>`
+    :nst==='approved'?`<button class="btn sm dan" data-ns="rejected" data-id="${n.id}">เอาลงจากเว็บ</button>`
+    :`<button class="btn sm ok" data-ns="approved" data-id="${n.id}">อนุมัติ</button><button class="btn sm" data-ns="pending" data-id="${n.id}">กลับไปรอตรวจ</button>`;
+  $('#nlist').innerHTML=nitems.length?nitems.map(n=>`<div class="nrow ${nsel.has(n.id)?'sel':''}">${nst==='approved'?'<span></span>':`<input type="checkbox" data-pick="${n.id}" ${nsel.has(n.id)?'checked':''} aria-label="เลือกข่าวนี้">`}
+<div class="nth">${esc(n.sourceName)}${n.image?`<img src="${esc(n.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>
+<div><a class="t" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="meta"><b>${esc(n.sourceName)}</b><span>${esc(n.catName)}</span><span>${ago(n.published)}</span>${n.lang==='en'?'<span>ภาษาอังกฤษ</span>':''}${n.reason?`<span class="why">${esc(n.reason)}</span>`:''}</div><p>${esc(n.summary)}</p></div>
+<div class="acts">${acts(n)}</div></div>`).join(''):`<div class="empty">${nst==='pending'?'ไม่มีข่าวรอตรวจ กด "ดึงข่าวตอนนี้" เพื่อดึงข่าวใหม่':'ไม่มีข่าวในหมวดนี้'}</div>`;
+}
+async function setNews(ids,status){
+  try{const d=await api('/api/admin/news/status',{method:'POST',body:{ids,status}});
+    toast(`${status==='approved'?'อนุมัติ':status==='rejected'?(nst==='approved'?'เอาลง':'ไม่อนุมัติ'):'ย้ายกลับไปรอตรวจ'} ${d.updated} ข่าวแล้ว`);loadNews();}
+  catch(e){if(e.message!=='unauthorized')alert('บันทึกไม่สำเร็จ: '+e.message);}
+}
+$('#nst').onclick=e=>{const b=e.target.closest('[data-st]');if(b){nst=b.dataset.st;loadNews();}};
+$('#nlist').onclick=e=>{const b=e.target.closest('[data-ns]');if(b){b.disabled=true;setNews([b.dataset.id],b.dataset.ns);}};
+$('#nlist').onchange=e=>{const c=e.target.closest('[data-pick]');if(!c)return;c.checked?nsel.add(c.dataset.pick):nsel.delete(c.dataset.pick);renderNews();};
+$('#nall').onchange=e=>{nsel=e.target.checked?new Set(nitems.map(n=>n.id)):new Set();renderNews();};
+$('#nbulk').onclick=e=>{const b=e.target.closest('[data-bulk]');if(!b)return;if(!nsel.size){toast('ยังไม่ได้เลือกข่าว');return;}setNews([...nsel],b.dataset.bulk);};
+$('#nfetch').onclick=async()=>{
+  const b=$('#nfetch');b.disabled=true;b.textContent='กำลังดึงข่าว...';
+  try{const d=await api('/api/admin/news/fetch',{method:'POST'});
+    const add=d.report.reduce((s,r)=>s+(r.added||0),0),bad=d.report.filter(r=>!r.ok);
+    toast(`ได้ข่าวใหม่ ${add} ข่าว${bad.length?` · ดึงไม่ได้: ${bad.map(r=>r.source).join(', ')}`:''}`);nst='pending';loadNews();}
+  catch(e){if(e.message!=='unauthorized')alert('ดึงข่าวไม่สำเร็จ: '+e.message);}
+  finally{b.disabled=false;b.textContent='ดึงข่าวตอนนี้';}
+};
+// ตั้งค่าแหล่งข่าว + คำต้องห้าม
+let ncfg=null;
+const srow=(s,i)=>`<div class="srow" data-i="${i}"><label title="เปิดใช้"><input type="checkbox" data-f="enabled" ${s.enabled?'checked':''}>ใช้</label>
+<input data-f="name" value="${esc(s.name)}" placeholder="ชื่อแหล่งข่าว" maxlength="40"><input class="u" data-f="url" value="${esc(s.url)}" placeholder="https://.../feed (ลิงก์ RSS)">
+<select data-f="cat">${Object.entries(CATN).map(([k,l])=>`<option value="${k}" ${s.cat===k?'selected':''}>${l}</option>`).join('')}</select>
+<select data-f="lang"><option value="th" ${s.lang!=='en'?'selected':''}>ไทย</option><option value="en" ${s.lang==='en'?'selected':''}>อังกฤษ</option></select>
+<label title="ข่าวจากแหล่งนี้ขึ้นเว็บทันทีโดยไม่ต้องตรวจ"><input type="checkbox" data-f="auto" ${s.auto?'checked':''}>อนุมัติอัตโนมัติ</label>
+<button class="btn sm dan" data-rm="${i}" aria-label="ลบแหล่งข่าว">ลบ</button></div>`;
+function readRows(){return [...document.querySelectorAll('#ncfg .srow')].map(r=>{const v=f=>r.querySelector(`[data-f="${f}"]`);return {id:ncfg.sources[+r.dataset.i]?.id||'',name:v('name').value,url:v('url').value,cat:v('cat').value,lang:v('lang').value,enabled:v('enabled').checked,auto:v('auto').checked};});}
+function paintCfg(){
+  $('#ncfg').innerHTML=`<h3>แหล่งข่าว (RSS)</h3><div class="srow shead"><span></span><span>ชื่อ</span><span>ลิงก์ RSS</span><span>หมวด</span><span>ภาษา</span><span></span><span></span></div>
+${ncfg.sources.map(srow).join('')}<div><button class="btn sm" id="sadd">+ เพิ่มแหล่งข่าว</button></div>
+<h3>คำต้องห้าม <small class="mu" style="font-weight:400">ข่าวที่มีคำเหล่านี้ในหัวข้อหรือสรุปจะถูกกรองออก (บรรทัดละ 1 คำ)</small></h3>
+<textarea id="nblock" rows="5">${esc(ncfg.block.join('\n'))}</textarea>
+<div class="hint mu" style="font-size:12px">ระบบดึงข่าวทุก ${ncfg.interval} นาที เก็บเฉพาะข่าวไม่เกิน 3 วัน และตัดข่าวหัวข้อซ้ำให้อัตโนมัติ</div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="scancel">ปิด</button><button class="btn pri" id="ssave">บันทึกการตั้งค่า</button></div>`;
+}
+$('#ncfgBtn').onclick=async()=>{
+  if(!$('#ncfg').classList.contains('hide')){$('#ncfg').classList.add('hide');return;}
+  try{ncfg=await api('/api/admin/news/config');paintCfg();$('#ncfg').classList.remove('hide');}catch(e){if(e.message!=='unauthorized')alert('โหลดการตั้งค่าไม่สำเร็จ: '+e.message);}
+};
+$('#ncfg').onclick=async e=>{
+  if(e.target.id==='sadd'){ncfg.sources=readRows();ncfg.sources.push({id:'',name:'',url:'',cat:'game',lang:'th',enabled:true,auto:false});paintCfg();return;}
+  const rm=e.target.closest('[data-rm]');if(rm){ncfg.sources=readRows();ncfg.sources.splice(+rm.dataset.rm,1);paintCfg();return;}
+  if(e.target.id==='scancel'){$('#ncfg').classList.add('hide');return;}
+  if(e.target.id==='ssave'){const b=e.target;b.disabled=true;
+    try{const d=await api('/api/admin/news/config',{method:'PUT',body:{sources:readRows(),block:$('#nblock').value}});ncfg={...ncfg,...d};paintCfg();toast('บันทึกการตั้งค่าข่าวแล้ว');}
+    catch(err){if(err.message!=='unauthorized')alert(err.message);}finally{b.disabled=false;}}
 };
 
 document.onkeydown=e=>{if(e.key==='Escape'&&$('#md').classList.contains('show'))closeEd();};

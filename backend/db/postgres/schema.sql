@@ -74,3 +74,26 @@ CREATE TABLE IF NOT EXISTS images (
   data       BYTEA NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ข่าวสารจาก RSS (status: pending รอตรวจ / approved ขึ้นเว็บ / rejected ไม่อนุมัติ / filtered ถูกกรองอัตโนมัติ)
+CREATE TABLE IF NOT EXISTS news (
+  id        TEXT PRIMARY KEY,                 -- sha1 ของลิงก์ข่าว (กันข่าวซ้ำ)
+  source    TEXT NOT NULL,
+  cat       TEXT NOT NULL,                    -- game / tech / hw
+  lang      TEXT NOT NULL DEFAULT '',
+  title     TEXT NOT NULL,
+  summary   TEXT NOT NULL DEFAULT '',
+  link      TEXT NOT NULL,
+  image     TEXT NOT NULL DEFAULT '',
+  published TIMESTAMPTZ NOT NULL,
+  fetched   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  status    TEXT NOT NULL DEFAULT 'pending',
+  reason    TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS news_pub_idx ON news (published DESC);
+
+-- การตั้งค่าที่แก้จากหน้า admin (เช่น แหล่งข่าว คำต้องห้าม) เก็บเป็น JSON
+CREATE TABLE IF NOT EXISTS settings (
+  k TEXT PRIMARY KEY,
+  v TEXT NOT NULL
+);

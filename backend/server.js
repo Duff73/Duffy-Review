@@ -3,6 +3,7 @@ const cors = require("cors");
 const store = require("./store");
 const auth = require("./auth");
 const members = require("./members");
+const news = require("./news");
 // ให้ผู้ที่ไม่ได้เป็นสมาชิกแสดงความคิดเห็นได้ไหม (ค่าเริ่มต้น: ไม่ได้ ต้องสมัครสมาชิกก่อน)
 const COMMENT_GUESTS = process.env.COMMENT_GUESTS === "true";
 
@@ -71,7 +72,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "profile-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "news-v1", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
@@ -182,6 +183,7 @@ app.delete("/api/comments/:cid", (req, res) => {
 
 // ================= ระบบผู้ดูแล (admin) =================
 members.register(app); // สมัครสมาชิก / เข้าสู่ระบบ / ออกจากระบบ + admin จัดการสมาชิก
+news.register(app);    // ข่าวสารวงการเกม/ไอที (ข่าวที่อนุมัติแล้ว + admin คิวตรวจข่าว)
 app.post("/api/admin/login", auth.login);
 app.post("/api/admin/logout", auth.logout);
 app.get("/api/admin/me", auth.requireAdmin, (req, res) => res.json({ user: req.admin.u, exp: req.admin.exp, storage: store.kind }));
@@ -283,5 +285,5 @@ app.get("/api/admin/comments", auth.requireAdmin, (_, res) => {
 });
 
 store.init()
-  .then(() => { setInterval(() => store.refreshGames().catch((e) => console.error("refresh failed:", e.message)), 60000).unref(); return app.listen(PORT, () => console.log(`Duffy Review API running on port ${PORT}`)); })
+  .then(() => { setInterval(() => store.refreshGames().catch((e) => console.error("refresh failed:", e.message)), 60000).unref(); news.start(); return app.listen(PORT, () => console.log(`Duffy Review API running on port ${PORT}`)); })
   .catch((e) => { console.error("startup failed:", e.message); process.exit(1); });

@@ -8,7 +8,9 @@ const path = require("path");
 const FILE = path.join(process.env.DATA_DIR || path.join(__dirname, "data"), "store.json");
 const URL_ = process.env.DATABASE_URL || "";
 const kind = !URL_ ? "file" : /^mysql/i.test(URL_) ? "mysql" : "postgres";
-const state = { games: [], views: {}, comments: [], ratings: {}, users: [] };
+const state = { games: [], views: {}, comments: [], ratings: {}, users: [], news: [], settings: {} };
+const iso = (d) => new Date(d).toISOString();
+const toNews = (r) => ({ id: r.id, source: r.source, cat: r.cat, lang: r.lang || "", title: r.title, summary: r.summary || "", link: r.link, image: r.image || "", published: iso(r.published), fetched: iso(r.fetched), status: r.status, reason: r.reason || "" });
 
 const arr = (x) => { if (Array.isArray(x)) return x; try { return JSON.parse(x || "[]"); } catch (_) { return []; } };
 const toGame = (r) => ({
@@ -73,6 +75,15 @@ function pgAdapter() {
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = $1", [id]),
     saveImage: async (mime, data) => (await pool.query("INSERT INTO images (mime, data) VALUES ($1, $2) RETURNING id", [mime, data])).rows[0].id,
     loadImage: async (id) => (await pool.query("SELECT mime, data FROM images WHERE id = $1", [id])).rows[0] || null,
+    // ---- ข่าวสาร + การตั้งค่า ----
+    loadNews: async () => (await pool.query("SELECT * FROM news ORDER BY published DESC LIMIT 3000")).rows.map(toNews),
+    saveNews: async (items) => { for (const n of items) await pool.query(
+      "INSERT INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (id) DO NOTHING",
+      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, n.published, n.fetched, n.status, n.reason]); },
+    setNewsStatus: (ids, status) => pool.query("UPDATE news SET status = $1, reason = '' WHERE id = ANY($2)", [status, ids]),
+    pruneNews: (before) => pool.query("DELETE FROM news WHERE published < $1", [new Date(before)]),
+    loadSettings: async () => Object.fromEntries((await pool.query("SELECT k, v FROM settings")).rows.map((r) => [r.k, obj(r.v)])),
+    saveSetting: (k, v) => pool.query("INSERT INTO settings (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v", [k, JSON.stringify(v)]),
   };
 }
 
@@ -137,13 +148,22 @@ function mysqlAdapter() {
     deleteGame: (id) => pool.query("DELETE FROM games WHERE id = ?", [id]),
     saveImage: async (mime, data) => (await pool.query("INSERT INTO images (mime, data) VALUES (?, ?)", [mime, data]))[0].insertId,
     loadImage: async (id) => (await pool.query("SELECT mime, data FROM images WHERE id = ?", [id]))[0][0] || null,
+    // ---- ข่าวสาร + การตั้งค่า ----
+    loadNews: async () => (await pool.query("SELECT * FROM news ORDER BY published DESC LIMIT 3000"))[0].map(toNews),
+    saveNews: async (items) => { for (const n of items) await pool.query(
+      "INSERT IGNORE INTO news (id, source, cat, lang, title, summary, link, image, published, fetched, status, reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      [n.id, n.source, n.cat, n.lang, n.title, n.summary, n.link, n.image, new Date(n.published), new Date(n.fetched), n.status, n.reason]); },
+    setNewsStatus: (ids, status) => pool.query("UPDATE news SET status = ?, reason = '' WHERE id IN (?)", [status, ids]),
+    pruneNews: (before) => pool.query("DELETE FROM news WHERE published < ?", [new Date(before)]),
+    loadSettings: async () => Object.fromEntries((await pool.query("SELECT k, v FROM settings"))[0].map((r) => [r.k, obj(r.v)])),
+    saveSetting: (k, v) => pool.query("INSERT INTO settings (k, v) VALUES (?, ?) ON DUPLICATE KEY UPDATE v = VALUES(v)", [k, JSON.stringify(v)]),
   };
 }
 
 const db = kind === "postgres" ? pgAdapter() : kind === "mysql" ? mysqlAdapter() : null;
 let gamesEdited = false; // โหมดไฟล์: เมื่อแก้เกมผ่าน admin จะเก็บรายการเกมลง store.json ด้วย
 const fileSave = () => {
-  const data = { views: state.views, comments: state.comments, ratings: state.ratings, users: state.users };
+  const data = { views: state.views, comments: state.comments, ratings: state.ratings, users: state.users, news: state.news, settings: state.settings };
   if (gamesEdited) data.games = state.games;
   try { fs.writeFileSync(FILE, JSON.stringify(data)); }
   catch (e) { console.error("save failed:", e.message); }
@@ -161,6 +181,8 @@ async function init() {
     state.comments = await db.loadComments();
     state.ratings = await db.loadRatings();
     state.users = await db.loadUsers();
+    state.news = await db.loadNews();
+    state.settings = await db.loadSettings();
   } else {
     state.games = seed;
     try { const d = JSON.parse(fs.readFileSync(FILE, "utf8")); Object.assign(state, d); gamesEdited = Array.isArray(d.games); } catch (_) {}
@@ -241,4 +263,15 @@ async function updateUser(id, { name, profile }) {
   return u;
 }
 
-module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage };
+// ---- ข่าวสาร (state.news มีทุกสถานะ) + การตั้งค่า ----
+async function saveNews(items) { if (db) await db.saveNews(items); else fileSave(); }
+async function setNewsStatus(ids, status) { if (!ids.length) return; if (db) await db.setNewsStatus(ids, status); else setTimeout(fileSave, 0); }
+async function pruneNews(before) {
+  const n = state.news.length;
+  state.news = state.news.filter((x) => Date.parse(x.published) >= before);
+  if (state.news.length === n) return;
+  if (db) await db.pruneNews(before); else fileSave();
+}
+async function saveSetting(k, v) { if (db) await db.saveSetting(k, v); state.settings[k] = v; if (!db) fileSave(); }
+
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage, saveNews, setNewsStatus, pruneNews, saveSetting };

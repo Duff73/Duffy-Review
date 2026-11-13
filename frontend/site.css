@@ -224,3 +224,15 @@ footer{border-top:1px solid var(--bd);padding:24px var(--pad);text-align:center;
 .mini .cv{aspect-ratio:16/9}
 .mini span{display:block;padding:8px 10px;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ===================== กล่องข่าวล่าสุด (หน้าแรก) ===================== */
+.nwi{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:12px}
+.nwi:hover{background:var(--sf2)}.nwi:hover .n span{color:var(--ac)}
+.nwi .th{width:64px;margin-top:2px;background:linear-gradient(135deg,var(--ac2),var(--ac))}
+.nwi .n{flex:1;min-width:0;font-size:13.5px;font-weight:500;line-height:1.35}
+.nwi .n span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nwi .n small{display:block;color:var(--mu);font-size:12px;font-weight:400;margin-top:2px}
+.nmore{display:block;text-align:center;margin-top:8px;padding:8px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--ac)}
+.nmore:hover{background:var(--sf2)}
+.nwi .n small b{font-weight:600;color:var(--tx)}
+.nnote{margin:8px 4px 0;font-size:11.5px;color:var(--mu);line-height:1.4}

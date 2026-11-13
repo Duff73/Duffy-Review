@@ -72,3 +72,26 @@ CREATE TABLE IF NOT EXISTS images (
   data       MEDIUMBLOB  NOT NULL,
   created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- ข่าวสารจาก RSS (status: pending / approved / rejected / filtered)
+CREATE TABLE IF NOT EXISTS news (
+  id        VARCHAR(40)   PRIMARY KEY,
+  source    VARCHAR(40)   NOT NULL,
+  cat       VARCHAR(20)   NOT NULL,
+  lang      VARCHAR(8)    NOT NULL DEFAULT '',
+  title     VARCHAR(500)  NOT NULL,
+  summary   TEXT          NOT NULL,
+  link      VARCHAR(1000) NOT NULL,
+  image     VARCHAR(1000) NOT NULL DEFAULT '',
+  published DATETIME(3)   NOT NULL,
+  fetched   DATETIME(3)   NOT NULL,
+  status    VARCHAR(12)   NOT NULL DEFAULT 'pending',
+  reason    VARCHAR(200)  NOT NULL DEFAULT '',
+  KEY news_pub_idx (published)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- การตั้งค่าที่แก้จากหน้า admin เก็บเป็น JSON
+CREATE TABLE IF NOT EXISTS settings (
+  k VARCHAR(50) PRIMARY KEY,
+  v MEDIUMTEXT  NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

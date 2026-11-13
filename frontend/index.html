@@ -16,6 +16,7 @@
   <button class="logo" data-home aria-label="หน้าแรก Duffy Review"><i>D</i><span>Duffy <b>Review</b></span></button>
   <nav class="nav" aria-label="เมนูหลัก">
     <button class="nb on" id="homeBtn" data-home>หน้าแรก</button>
+    <a class="nb" href="news.html">ข่าวสาร</a>
     <div class="dd" data-k="cat"><button class="nb" aria-haspopup="true">หมวดหมู่เกม<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></button><div class="dm"></div></div>
     <div class="dd" data-k="age"><button class="nb" aria-haspopup="true">หมวดหมู่อายุ<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></button><div class="dm"></div></div>
   </nav>
@@ -37,6 +38,7 @@
     <aside>
       <div class="box"><h2><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>Top 10 คะแนนสูงสุด</h2><div id="top"></div></div>
       <div class="box"><h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>หมวดหมู่</h2><div class="cats" id="cats"></div></div>
+      <div class="box" id="newsBox" hidden><h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5"/></svg>ข่าวล่าสุด</h2><div id="newsList"></div><p class="nnote">ข่าวและภาพเป็นลิขสิทธิ์ของแหล่งข่าวต้นทาง กดเพื่ออ่านฉบับเต็ม</p><a class="nmore" href="news.html">ดูข่าวทั้งหมด</a></div>
     </aside>
   </div>
 </main>
@@ -326,6 +328,16 @@ $('#grid').innerHTML='<div class="sk"></div>'.repeat(6);
 $('#hin').innerHTML='<div><div class="kick"><i>D</i>Duffy Review</div><h1>กำลังโหลดรีวิว...</h1><p class="site">เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่นประมาณ 30–50 วินาทีในครั้งแรก</p></div>';
 render();
 loadAll();
+// กล่อง "ข่าวล่าสุด" (เฉพาะข่าวที่ทีมงานอนุมัติแล้ว) รีเฟรชทุก 2 นาที
+const agoS=d=>{const s=(Date.now()-new Date(d))/1000;return s<3600?Math.max(1,Math.floor(s/60))+' นาที':s<86400?Math.floor(s/3600)+' ชม.':Math.floor(s/86400)+' วัน';};
+async function loadNewsBox(){
+  if(document.hidden)return;
+  try{const d=await api('/api/news?limit=5');
+    $('#newsBox').hidden=!d.items.length;
+    $('#newsList').innerHTML=d.items.map(n=>`<a class="nwi" href="${esc(n.link)}" target="_blank" rel="noopener noreferrer" title="อ่านต้นฉบับที่ ${esc(n.sourceName)}${n.sourceDomain?' ('+esc(n.sourceDomain)+')':''}"><span class="th">${n.image?`<img src="${esc(n.image)}" alt="ภาพจาก ${esc(n.sourceName)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</span><span class="n"><span>${esc(n.title)}</span><small>ที่มา: <b>${esc(n.sourceName)}</b> · ${agoS(n.published)}ที่แล้ว</small></span></a>`).join('');
+  }catch(_){}
+}
+loadNewsBox();setInterval(loadNewsBox,120000);
 const setViews=(id,n)=>document.querySelectorAll(`[data-vw="${id}"]`).forEach(e=>e.textContent=fmt(n));
 async function refreshViews(){if(document.hidden||!ALL.length)return;try{const m=await api('/api/views');for(const id in m){setViews(id,m[id]);const g=ALL.find(x=>x.id==id);if(g)g.views=m[id];}}catch(_){}}
 setInterval(refreshViews,15000);

@@ -3,8 +3,8 @@
 เว็บรีวิวเกม — **frontend** (HTML/CSS/JS) deploy บน Vercel, **backend** (Node.js + Express) deploy บน Render
 
 ```
-frontend/   หน้าเว็บ (index.html, profile.html, site.css, login.html, register.html, auth.css, admin.html, favicon.svg, config.js, vercel.json)
-backend/    REST API (server.js, auth.js, members.js, store.js, data/games.json)
+frontend/   หน้าเว็บ (index.html, news.html, profile.html, site.css, login.html, register.html, auth.css, admin.html, favicon.svg, config.js, vercel.json)
+backend/    REST API (server.js, auth.js, members.js, news.js, store.js, data/games.json)
 render.yaml ตั้งค่า Render
 ```
 
@@ -166,3 +166,11 @@ cd frontend && npx serve . -l 5500           # เปิด http://localhost:550
 | `PUT /api/auth/profile` | แก้โปรไฟล์ตัวเอง `{name, bio, avatar, banner, accent, favs}` |
 | `POST /api/auth/images` | สมาชิกอัปโหลดรูปโปรไฟล์/แบนเนอร์ |
 | `GET /api/users/:username` | ดูโปรไฟล์ สถิติ ป้าย เกมโปรด และความคิดเห็นล่าสุด |
+
+## ข่าวสารวงการเกม / ไอที / คอมพิวเตอร์ (กรองก่อนขึ้นเว็บ)
+- เซิร์ฟเวอร์ดึงข่าวจาก RSS ของสำนักข่าวทุก 10 นาที (ปรับด้วย `NEWS_INTERVAL_MIN`, ปิดด้วย `NEWS_DISABLED=true`) — ค่าเริ่มต้น: GamingDose, Blognone, beartai, IGN, GameSpot, PC Gamer, The Verge, Tom's Hardware
+- **กรอง 2 ชั้น**: (1) อัตโนมัติ — ตัดข่าวเก่ากว่า 3 วัน ข่าวซ้ำ (ลิงก์/หัวข้อเดียวกัน) และข่าวที่มีคำต้องห้าม → แท็บ "ถูกกรองอัตโนมัติ" (2) **ผู้ดูแลอนุมัติ** — ข่าวที่ผ่านชั้นแรกเข้าคิว "รอตรวจ" ต้องกดอนุมัติก่อนขึ้นเว็บ (เปิด "อนุมัติอัตโนมัติ" ให้แหล่งที่ไว้ใจได้)
+- หน้า admin > แท็บ **ข่าวสาร**: อนุมัติ/ไม่อนุมัติทีละข่าวหรือเลือกหลายข่าว, เอาข่าวลงจากเว็บ, กู้ข่าวที่ถูกกรอง, ปุ่ม "ดึงข่าวตอนนี้", ตั้งค่าแหล่งข่าว (เพิ่ม/ลบ/ปิด, หมวด, ภาษา) และคำต้องห้าม
+- หน้า `/news` แสดงข่าวที่อนุมัติแล้ว แยกหมวด เกม / ไอทีและดิจิทัล / ฮาร์ดแวร์คอมพิวเตอร์ เช็กข่าวใหม่ทุก 1 นาที (ขึ้นปุ่ม "มีข่าวใหม่") + กล่อง "ข่าวล่าสุด" บนหน้าแรก
+- แสดงเฉพาะหัวข้อ สรุปสั้น (≤ 280 ตัวอักษร) รูป และลิงก์ไปต้นทาง ไม่คัดลอกบทความ ข่าวในระบบเก่ากว่า 30 วันถูกลบอัตโนมัติ เก็บในตาราง `news` และการตั้งค่าในตาราง `settings`
+- หมายเหตุ: Render แพ็กเกจฟรีจะหลับเมื่อไม่มีคนใช้ ระหว่างหลับจะไม่ดึงข่าว พอมีคนเปิดเว็บก็กลับมาดึงต่อ
