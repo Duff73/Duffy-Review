@@ -237,7 +237,7 @@ ${sim.length?`<h3 class="sec-h">รีวิวหมวด${esc(g.category)}อ
 async function loadComments(id){
   try{const r=await api(`/api/games/${id}/comments`);
     const prof=c=>c.username?`profile.html?u=${encodeURIComponent(c.username)}`:'';
-    $('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt">${prof(c)?`<a href="${prof(c)}" title="ดูโปรไฟล์ ${esc(c.name)}">`:''}<span class="av${c.userId?'':' g'}"${c.accent?` style="--c:${esc(c.accent)}"`:''}>${esc(([...String(c.name)][0]||'?').toUpperCase())}${c.avatar?`<img src="${esc(imgUrl(c.avatar))}" alt="" loading="lazy">`:''}</span>${prof(c)?'</a>':''}<div>${prof(c)?`<a class="nm" href="${prof(c)}">${esc(c.name)}</a>`:`<b>${esc(c.name)}</b>`}${c.userId?'<span class="badge">สมาชิก</span>':''} <small>${thDate(c.date)}</small>${c.rating?` <small>${stars(c.rating)}</small>`:''}${ME&&c.userId===ME.id?`<button class="cdel" data-cdel="${esc(c.id)}">ลบ</button>`:`<button class="crep" data-rep="${esc(c.id)}" title="แจ้งความคิดเห็นที่ไม่เหมาะสมให้ทีมงานตรวจ">${I.flag}รายงาน</button>`}<p>${esc(c.text)}</p><div class="repbox" data-repbox="${esc(c.id)}" hidden></div></div></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย</p>';
+    $('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt">${prof(c)?`<a href="${prof(c)}" data-pu="${esc(c.username)}" title="ดูโปรไฟล์ ${esc(c.name)}">`:''}<span class="av${c.userId?'':' g'}"${c.accent?` style="--c:${esc(c.accent)}"`:''}>${esc(([...String(c.name)][0]||'?').toUpperCase())}${c.avatar?`<img src="${esc(imgUrl(c.avatar))}" alt="" loading="lazy">`:''}</span>${prof(c)?'</a>':''}<div>${prof(c)?`<a class="nm" href="${prof(c)}" data-pu="${esc(c.username)}" title="ดูโปรไฟล์ ${esc(c.name)}">${esc(c.name)}</a>`:`<b>${esc(c.name)}</b>`}${c.userId?'<span class="badge">สมาชิก</span>':''} <small>${thDate(c.date)}</small>${c.rating?` <small>${stars(c.rating)}</small>`:''}${ME&&c.userId===ME.id?`<button class="cdel" data-cdel="${esc(c.id)}">ลบ</button>`:`<button class="crep" data-rep="${esc(c.id)}" title="แจ้งความคิดเห็นที่ไม่เหมาะสมให้ทีมงานตรวจ">${I.flag}รายงาน</button>`}<p>${esc(c.text)}</p><div class="repbox" data-repbox="${esc(c.id)}" hidden></div></div></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย</p>';
     $('#ccount').textContent=r.length;
     const g=ALL.find(x=>x.id===id);if(g&&g.commentCount!==r.length){g.commentCount=r.length;stale=true;}
   }catch(e){$('#clist').innerHTML='<p class="mu">โหลดความคิดเห็นไม่สำเร็จ</p>';}
@@ -291,16 +291,49 @@ async function openM(id,jump){
 }
 function closeM(){
   if(!$('#md').classList.contains('show'))return;
+  closePC();
   $('#md').classList.remove('show');document.body.classList.remove('lock');cur=null;
   history.replaceState(null,'',location.pathname);
   document.title='Duffy Review | รีวิวเกม คะแนน และความคุ้มค่าก่อนซื้อ';
   if(stale)render();
 }
 
+/* ---------- การ์ดโปรไฟล์ย่อ: กดชื่อ/รูปคนที่แสดงความคิดเห็น ---------- */
+const PCACHE={};let pcPlace=null;
+function closePC(){const p=$('#pcard');if(p)p.remove();pcPlace=null;}
+async function openPC(el,username){
+  closePC();
+  const p=document.createElement('div');p.id='pcard';p.className='pcard';p.setAttribute('role','dialog');p.setAttribute('aria-label','โปรไฟล์สมาชิก');
+  p.innerHTML='<div class="pcl">กำลังโหลดโปรไฟล์...</div>';document.body.appendChild(p);
+  const place=()=>{const r=el.getBoundingClientRect(),w=p.offsetWidth,h=p.offsetHeight;
+    let left=Math.min(Math.max(12,r.left),innerWidth-w-12),top=r.bottom+8;
+    if(top+h>innerHeight-12)top=Math.max(12,r.top-h-8);p.style.left=left+'px';p.style.top=top+'px';};
+  pcPlace=()=>{if(!el.isConnected)return closePC();place();};place();
+  try{
+    const d=PCACHE[username]||(PCACHE[username]=await api('/api/users/'+encodeURIComponent(username)));
+    if($('#pcard')!==p)return;
+    const u=d.user,href=`profile.html?u=${encodeURIComponent(u.username)}`;
+    const ban=/^\/api\/images\/\d+$/.test(u.banner||'')?` style="background-image:url('${esc(imgUrl(u.banner))}')"`:'';
+    p.innerHTML=`<div class="pcb${ban?' img':''}"${ban}></div>
+<div class="pch"><span class="av" style="--c:${esc(u.accent||'#ff6a2b')}">${esc(([...String(u.name)][0]||'?').toUpperCase())}${u.avatar?`<img src="${esc(imgUrl(u.avatar))}" alt="">`:''}</span>
+<div class="pcn"><b>${esc(u.name)}</b>${d.isMe?'<span class="you">คุณ</span>':''}<small>@${esc(u.username)}</small></div></div>
+${u.bio?`<p class="pbio">${esc(u.bio)}</p>`:''}
+<div class="pst"><span><b>${d.stats.comments}</b>ความคิดเห็น</span><span><b>${(u.favs||[]).length}</b>เกมโปรด</span><span><b>${(u.wish||[]).length}</b>อยากเล่น</span></div>
+${(u.favs||[]).length?`<div class="pfav">เกมโปรด: ${u.favs.map(g=>esc(g.title)).join(', ')}</div>`:''}
+<div class="pft"><small>สมาชิกตั้งแต่ ${thDate(u.created)}</small><a class="btn a" href="${href}">ดูโปรไฟล์</a></div>`;
+    place();
+  }catch(e){if($('#pcard')===p)p.innerHTML='<div class="pcl">โหลดโปรไฟล์ไม่สำเร็จ</div>';}
+}
+// เลื่อนหน้า/หมุนจอ: การ์ดตามชื่อที่กดไปด้วย (ไม่ปิดเอง)
+$('#md').addEventListener('scroll',()=>pcPlace&&pcPlace(),{passive:true});addEventListener('resize',()=>pcPlace&&pcPlace());
+
 /* ---------- คลิกทั้งหน้า ---------- */
 document.onclick=e=>{
   const t=e.target;
   if(!t.closest('.dd'))closeDD();
+  const pu=t.closest('[data-pu]');
+  if(pu&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey){e.preventDefault();if($('#pcard')&&$('#pcard').dataset.u===pu.dataset.pu){closePC();return;}openPC(pu,pu.dataset.pu);$('#pcard').dataset.u=pu.dataset.pu;return;}
+  if(!t.closest('#pcard'))closePC();
   if(t.closest('[data-home]')){reset();return;}
   const ch=t.closest('[data-c]');if(ch){S.cat=ch.dataset.c;render();toList();return;}
   const sg=t.closest('[data-s]');if(sg){S.sort=sg.dataset.s;render();return;}
@@ -319,7 +352,7 @@ document.onclick=e=>{
 };
 document.onkeydown=e=>{
   if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus();}
-  if(e.key==='Escape'){if($('#md').classList.contains('show'))closeM();else closeDD();}
+  if(e.key==='Escape'){if($('#pcard')){closePC();return;}if($('#md').classList.contains('show'))closeM();else closeDD();}
   if((e.key==='Enter'||e.key===' ')&&e.target.matches('.fimg[data-i]')){e.preventDefault();e.target.click();}
 };
 
