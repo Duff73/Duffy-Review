@@ -27,11 +27,19 @@ function imageUrl(g, req) {
   if (g.image.startsWith("/api/images/")) return `${req.protocol}://${req.get("host")}${g.image}`;
   return `${FRONTEND}/${g.image.replace(/^\/+/, "")}`;
 }
+// คะแนนรวมแบบเดียวกับที่หน้าเว็บแสดง (คะแนนทีมงาน + ดาวผู้อ่าน) ดูสูตรใน server.js
+const PRIOR = Number(process.env.SCORE_PRIOR_WEIGHT) || 10;
+function scoreOf(g) {
+  const r = Object.values(state.ratings[g.id] || {});
+  const sum = r.reduce((s, x) => s + x, 0);
+  return +((g.score * PRIOR + sum * 2) / (PRIOR + r.length)).toFixed(1);
+}
 function sharePage(req, res) {
   const g = state.games.find((x) => x.id === Number(req.params.id));
   const to = g ? `${FRONTEND}/?g=${g.id}` : `${FRONTEND}/`;
   if (!g) return res.redirect(302, to);
-  const title = `${g.title} รีวิว คะแนน ${g.score}/10 | Duffy Review`;
+  const score = scoreOf(g);
+  const title = `${g.title} รีวิว${score > 0 ? ` คะแนน ${score}/10` : ""} | Duffy Review`; // ยังไม่มีคะแนนเลย -> ไม่แสดงตัวเลข
   const desc = (g.desc || "").slice(0, 200);
   const img = imageUrl(g, req);
   res.set({ "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" });

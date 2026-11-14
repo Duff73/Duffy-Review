@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สมาชิก | Duffy Review</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{if(!localStorage.getItem('duffy-member')&&!localStorage.getItem('duffy-admin'))location.replace('login.html?next='+encodeURIComponent(location.pathname+location.search));}catch(_){}</script>
+<script>try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+/* หน้ารายชื่อสมาชิก (ใช้ธีมจาก site.css) */
+.mhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:26px 0 16px}
+.mhead h1{margin:0;font-size:26px;display:flex;align-items:center;gap:10px}
+.mhead h1 .bar{width:6px;height:26px;border-radius:4px;background:var(--ac)}
+.mhead p{margin:4px 0 0;color:var(--mu);font-size:14px}
+.mtools{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.mtools .sr{flex:1 1 260px;max-width:420px;margin:0}
+.mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px;margin-bottom:40px}
+.mc{display:flex;gap:14px;align-items:center;padding:16px;border-radius:18px;background:var(--sf);border:1px solid var(--bd);box-shadow:var(--sh);min-width:0;transition:transform .15s,border-color .15s}
+.mc:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--ac) 55%,var(--bd));text-decoration:none}
+.mc .av{width:56px;height:56px;font-size:22px}
+.mc .tx{min-width:0;flex:1}
+.mc b{display:flex;align-items:center;gap:6px;font-size:15.5px;overflow:hidden;white-space:nowrap}
+.mc b span{overflow:hidden;text-overflow:ellipsis}
+.mc .you{flex:none;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--ac);color:#fff}
+.mc .un{display:block;color:var(--mu);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc .bio{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:6px 0 0;font-size:13px;color:var(--tx);opacity:.85;overflow-wrap:anywhere}
+.mc .st{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:8px;font-size:12px;color:var(--mu)}
+.mc .st>span{white-space:nowrap}
+.mc .st svg{width:13px;height:13px;vertical-align:-2px;margin-right:3px}
+.mempty{grid-column:1/-1}
+</style>
+</head>
+<body>
+
+<header><div class="wrap bar">
+  <a class="logo" href="./" aria-label="หน้าแรก Duffy Review"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
+  <nav class="nav" aria-label="เมนูหลัก"><a class="nb" href="./">หน้าแรก</a><a class="nb" href="news.html">ข่าวสาร</a><span class="nb on">สมาชิก</span></nav>
+  <span class="sp" style="flex:1"></span>
+  <button class="ib" id="theme" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด"></button>
+  <div class="acct" id="acct"></div>
+</div></header>
+
+<main class="wrap">
+  <div class="mhead"><div><h1><span class="bar"></span>สมาชิก Duffy Review</h1><p>กดที่สมาชิกเพื่อดูโปรไฟล์ เกมโปรด เกมที่อยากเล่น และความคิดเห็นล่าสุด</p></div><span class="cnt" id="cnt"></span></div>
+  <div class="mtools">
+    <div class="sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="ค้นหาชื่อสมาชิก หรือ @ชื่อผู้ใช้..." autocomplete="off" aria-label="ค้นหาสมาชิก"></div>
+    <div class="seg" id="seg" role="tablist" aria-label="เรียงตาม"></div>
+  </div>
+  <div class="mlist" id="list"></div>
+</main>
+<footer>© 2026 Duffy Review</footer>
+
+<script src="config.js"></script>
+<script>
+const API=(window.DUFFY_API_URL||"").replace(/\/$/,"");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const imgUrl=s=>/^\/api\/images\/\d+$/.test(s)?API+s:s;
+const thDate=d=>{try{return new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}catch(_){return ''}};
+const I={
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+};
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches;};
+const paintTheme=()=>$('#theme').innerHTML=isDark()?I.sun:I.moon;
+$('#theme').onclick=()=>{const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('duffy-theme',t)}catch(_){}paintTheme();};
+paintTheme();
+
+/* บัญชี */
+let mtoken=null,ADMIN=false,ME=null;
+try{mtoken=localStorage.getItem('duffy-member')}catch(_){}
+if(!mtoken){try{const a=JSON.parse(localStorage.getItem('duffy-admin')||'null');if(a&&a.token){mtoken=a.token;ADMIN=true;}}catch(_){}}
+const hdr=()=>{const h={'Content-Type':'application/json'};if(mtoken)h.Authorization='Bearer '+mtoken;return h;};
+function toLogin(){try{localStorage.removeItem(ADMIN?'duffy-admin':'duffy-member')}catch(_){}location.replace('login.html?next='+encodeURIComponent(location.pathname+location.search));}
+async function api(p){const r=await fetch(API+p,{headers:hdr()});if(r.status===401){toLogin();throw new Error('401');}if(!r.ok)throw new Error(r.status);return r.json();}
+const avHtml=u=>`<span class="av" style="--c:${esc(u.accent||'#ff6a2b')}">${esc(([...String(u.name||'?')][0]||'?').toUpperCase())}${u.avatar?`<img src="${esc(imgUrl(u.avatar))}" alt="" loading="lazy">`:''}</span>`;
+async function loadMe(){
+  if(!ADMIN){try{ME=(await api('/api/auth/me')).user;}catch(e){if(e.message==='401')return;}}
+  $('#acct').innerHTML=ME?`<a class="me" href="profile.html" title="โปรไฟล์ของฉัน">${avHtml(ME)}<span class="nm">${esc(ME.name)}</span></a><button class="out" id="logoutBtn" aria-label="ออกจากระบบ">${I.out}<span class="t">ออกจากระบบ</span></button>`:ADMIN?`<a class="out" href="admin.html">หน้าผู้ดูแล</a>`:'';
+  const b=$('#logoutBtn');if(b)b.onclick=async()=>{try{await fetch(API+'/api/auth/logout',{method:'POST',headers:hdr()})}catch(_){}try{localStorage.removeItem('duffy-member')}catch(_){}location.replace('login.html?out=1');};
+}
+
+/* รายชื่อสมาชิก */
+const SORTS=[['active','ความเคลื่อนไหวล่าสุด'],['comments','คอมเมนต์มากสุด'],['new','สมัครใหม่']];
+const P=new URLSearchParams(location.search);
+let sort=SORTS.some(s=>s[0]===P.get('sort'))?P.get('sort'):'active',q=P.get('q')||'',seq=0;
+$('#q').value=q;
+const card=u=>`<a class="mc" href="profile.html?u=${encodeURIComponent(u.username)}" title="ดูโปรไฟล์ของ ${esc(u.name)}">${avHtml(u)}<span class="tx">
+<b><span>${esc(u.name)}</span>${u.isMe?'<span class="you">คุณ</span>':''}</b><span class="un">@${esc(u.username)}</span>
+${u.bio?`<span class="bio">${esc(u.bio)}</span>`:''}
+<span class="st"><span>${I.chat}${u.comments} ความคิดเห็น</span><span title="เป็นสมาชิกตั้งแต่ ${thDate(u.created)}">${I.cal}${thDate(u.created)}</span></span></span></a>`;
+async function load(){
+  const my=++seq;
+  $('#seg').innerHTML=SORTS.map(([v,l])=>`<button role="tab" aria-selected="${sort===v}" class="${sort===v?'on':''}" data-s="${v}">${l}</button>`).join('');
+  history.replaceState(null,'',location.pathname+(q||sort!=='active'?'?'+new URLSearchParams({...(q?{q}:{}),...(sort!=='active'?{sort}:{})}):''));
+  try{
+    const d=await api(`/api/users?sort=${sort}&q=${encodeURIComponent(q)}`);if(my!==seq)return;
+    $('#cnt').textContent=`${d.total} คน`;
+    $('#list').innerHTML=d.items.length?d.items.map(card).join(''):`<div class="empty mempty"><b>${q?'ไม่พบสมาชิกที่ค้นหา':'ยังไม่มีสมาชิก'}</b>${q?'ลองพิมพ์ชื่ออื่น หรือชื่อผู้ใช้ที่ขึ้นต้นด้วย @':''}</div>`;
+  }catch(e){if(e.message!=='401')$('#list').innerHTML='<div class="empty mempty"><b>โหลดรายชื่อไม่สำเร็จ</b>ลองรีเฟรชหน้านี้อีกครั้ง</div>';}
+}
+let qt;
+$('#q').oninput=e=>{q=e.target.value.trim().replace(/^@/,'');clearTimeout(qt);qt=setTimeout(load,250);};
+document.addEventListener('click',e=>{const s=e.target.closest('[data-s]');if(s){sort=s.dataset.s;load();}});
+document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('#q').focus();}});
+$('#list').innerHTML='<div class="sk"></div>'.repeat(6);
+loadMe();load();
+</script>
+</body>
+</html>
