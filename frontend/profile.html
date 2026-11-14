@@ -108,7 +108,7 @@ a.cmt{color:inherit}a.cmt:hover p{color:var(--ac)}
 
 <header><div class="wrap bar">
   <a class="logo" href="./" aria-label="หน้าแรก Duffy Review"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
-  <nav class="nav" aria-label="เมนูหลัก"><a class="nb" href="./">หน้าแรก</a><a class="nb" href="news.html">ข่าวสาร</a><a class="nb" href="members.html">สมาชิก</a><span class="nb on">โปรไฟล์</span></nav>
+  <nav class="nav" aria-label="เมนูหลัก"><a class="nb" href="./">หน้าแรก</a><a class="nb" href="news.html">ข่าวสาร</a><span class="nb on">โปรไฟล์</span></nav>
   <span class="sp" style="flex:1"></span>
   <button class="ib" id="theme" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด"></button>
   <div class="acct" id="acct"></div>
@@ -207,7 +207,7 @@ ${me?`<button class="bnpen" data-pen="banner" aria-label="เปลี่ยน�
 ${nameHtml}
 <p class="site">@${esc(u.username)} · เป็นสมาชิกตั้งแต่ ${thDate(u.created,true)}</p>
 ${bioHtml}
-<div class="hbtns"><a class="btn o" href="./">${I.home}กลับหน้าแรก</a>${me?`<a class="btn o" href="password.html">${I.key}เปลี่ยนรหัสผ่าน</a>`:`<a class="btn o" href="members.html">สมาชิกคนอื่น</a>`}</div>
+<div class="hbtns"><a class="btn o" href="./">${I.home}กลับหน้าแรก</a>${me?`<a class="btn o" href="password.html">${I.key}เปลี่ยนรหัสผ่าน</a>`:''}</div>
 </div></div></section>`;
 }
 function render(){

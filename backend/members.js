@@ -179,25 +179,6 @@ function register(app) {
     catch (e) { console.error("wishlist save failed:", e.message); res.status(500).json({ error: "บันทึกไม่สำเร็จ กรุณาลองใหม่" }); }
   });
 
-  // รายชื่อสมาชิก (ค้นหาด้วยชื่อผู้ใช้/ชื่อที่แสดง) สำหรับหน้า "สมาชิก" กดเข้าไปดูโปรไฟล์ได้
-  app.get("/api/users", (req, res) => {
-    const q = String(req.query.q || "").trim().toLowerCase().slice(0, 40);
-    const sort = String(req.query.sort || "active");
-    const n = {}, last = {};
-    state.comments.forEach((c) => { if (c.userId) { n[c.userId] = (n[c.userId] || 0) + 1; if (!last[c.userId] || c.date > last[c.userId]) last[c.userId] = c.date; } });
-    const me = memberFrom(req);
-    let list = state.users.filter((u) => !q || u.username.includes(q) || u.name.toLowerCase().includes(q))
-      .map((u) => { const p = profileOf(u); return { username: u.username, name: u.name, avatar: p.avatar, accent: p.accent, bio: p.bio, created: u.created, comments: n[u.id] || 0, favs: p.favs.length, lastActive: last[u.id] || null, isMe: !!me && me.id === u.id }; });
-    const by = {
-      active: (a, b) => String(b.lastActive || "").localeCompare(String(a.lastActive || "")) || b.comments - a.comments,
-      comments: (a, b) => b.comments - a.comments || String(b.created).localeCompare(String(a.created)),
-      new: (a, b) => String(b.created).localeCompare(String(a.created)),
-      name: (a, b) => a.name.localeCompare(b.name, "th"),
-    };
-    list.sort(by[sort] || by.active);
-    res.json({ total: list.length, items: list.slice(0, 200) });
-  });
-
   // ดูโปรไฟล์ของสมาชิก พร้อมสถิติ ป้าย เกมโปรด เกมที่อยากเล่น และความคิดเห็นล่าสุด
   app.get("/api/users/:username", (req, res) => {
     const u = byName(String(req.params.username || "").toLowerCase());
