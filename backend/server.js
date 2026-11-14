@@ -4,6 +4,7 @@ const store = require("./store");
 const auth = require("./auth");
 const members = require("./members");
 const news = require("./news");
+const features = require("./features");
 // ให้ผู้ที่ไม่ได้เป็นสมาชิกแสดงความคิดเห็นได้ไหม (ค่าเริ่มต้น: ไม่ได้ ต้องสมัครสมาชิกก่อน)
 const COMMENT_GUESTS = process.env.COMMENT_GUESTS === "true";
 
@@ -63,6 +64,7 @@ function limiter(req, res, next) {
 
 // ต้องเข้าสู่ระบบ (สมาชิกหรือผู้ดูแล) ก่อนดูเนื้อหาทุกอย่าง ปิดได้ด้วย REQUIRE_LOGIN=false
 // เส้นทางที่เปิดไว้: health, สมัคร/ล็อกอิน (/api/auth), admin (เช็กสิทธิ์เอง), ลบคอมเมนต์ (เช็กสิทธิ์เอง)
+// หน้าแชร์ /share/:id ไม่อยู่ใต้ /api จึงเปิดให้ Facebook/Discord อ่านชื่อเกมและภาพปกได้
 const REQUIRE_LOGIN = process.env.REQUIRE_LOGIN !== "false";
 const OPEN = /^\/api\/(health|auth\/|admin\/|comments\/|images\/)/; // รูปต้องเปิดได้ด้วย <img> ซึ่งส่งโทเคนไม่ได้
 app.use("/api", (req, res, next) => {
@@ -72,7 +74,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/", (_, res) => res.json({ name: "Duffy Review API", ok: true }));
-app.get("/api/health", (_, res) => res.json({ status: "ok", version: "news-th-v2", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", version: "community-v3", requireLogin: REQUIRE_LOGIN, storage: store.kind, games: state.games.length }));
 // ยอดวิวรวมของทุกเกม (หน้าเว็บเรียกทุก 10 วินาทีเพื่ออัปเดตตัวเลขสด)
 app.get("/api/views", (_, res) => res.json(Object.fromEntries(state.games.map((g) => [g.id, viewsOf(g)]))));
 // หมวดหมู่และเรตอายุในเมนู สร้างอัตโนมัติจากข้อมูลเกมที่มีอยู่จริง
@@ -118,6 +120,7 @@ app.get("/api/games/:id", (req, res) => {
 
 // ให้ดาว 1-5 (1 เครื่อง/เบราว์เซอร์ ต่อ 1 เกม กดใหม่คือเปลี่ยนดาว) แล้วคำนวณคะแนนรวมใหม่
 app.post("/api/games/:id/rate", rlimiter, (req, res) => {
+  if (!members.memberFrom(req) && !auth.adminFrom(req)) return res.status(401).json({ error: "กรุณาเข้าสู่ระบบก่อนให้ดาว", needLogin: true });
   const id = Number(req.params.id);
   const g = state.games.find((x) => x.id === id);
   if (!g) return res.status(404).json({ error: "ไม่พบเกมนี้" });
@@ -281,8 +284,9 @@ app.get("/api/images/:id", async (req, res) => {
 // คอมเมนต์ล่าสุดทุกเกม สำหรับหน้า admin
 app.get("/api/admin/comments", auth.requireAdmin, (_, res) => {
   const t = Object.fromEntries(state.games.map((g) => [g.id, g.title]));
-  res.json(state.comments.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 300).map((c) => ({ ...c, gameTitle: t[c.gameId] || "-" })));
+  res.json(state.comments.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 300).map((c) => ({ ...c, gameTitle: t[c.gameId] || "-", reports: features.reportCount(c.id) })));
 });
+features.register(app); // รายงานความคิดเห็น, ลิงก์แชร์รีวิว
 
 store.init()
   .then(() => { setInterval(() => store.refreshGames().catch((e) => console.error("refresh failed:", e.message)), 60000).unref(); news.start(); return app.listen(PORT, () => console.log(`Duffy Review API running on port ${PORT}`)); })

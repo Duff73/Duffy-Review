@@ -115,6 +115,15 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 .nrow a.t:hover{color:var(--ac)}
 .nrow .meta{font-size:12px;color:var(--mu);display:flex;gap:8px;flex-wrap:wrap;margin:3px 0}
 .nrow .meta .why{color:var(--er)}
+.rp:not(:empty){display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:2px;border-radius:999px;background:var(--er);color:#fff;font-size:12px;font-weight:700}
+.rbox{background:color-mix(in srgb,var(--er) 7%,var(--sf));border:1px solid color-mix(in srgb,var(--er) 35%,var(--bd));border-radius:14px;padding:14px 16px;margin-bottom:18px}
+.rbox h3{margin:0 0 2px;font-size:16px;color:var(--er)}.rbox>p{margin:0 0 8px;font-size:13px}
+.cm .why{font-size:12.5px;color:var(--er);margin-top:4px}
+.rbtn{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;justify-content:flex-end}
+.flag{color:var(--er);font-weight:600}
+.tmp{margin-top:8px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--ok) 10%,var(--sf));font-size:13.5px}
+.tmp code{font-size:15px;font-weight:700;letter-spacing:.06em;background:var(--sf);padding:2px 8px;border-radius:6px;border:1px solid var(--bd)}
+.tmp small{color:var(--mu)}
 .nrow .orig{font-size:12.5px;color:var(--mu);font-style:italic;margin-top:2px}
 .nrow p{margin:2px 0 0;font-size:13px;color:var(--mu);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .nrow .acts{display:flex;flex-direction:column;gap:6px}
@@ -148,7 +157,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <div id="app" class="hide">
 <header><div class="bar">
 <a class="logo" href="./" title="ไปหน้าเว็บ"><img class="wm-ic" src="duffy-pixel.svg" alt="" width="40" height="40"><span class="wm2"><span class="wm2-a">DUFFY</span><span class="wm2-b">REVIEW</span></span></a>
-<nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น</button><button class="tab" data-tab="users">สมาชิก</button><button class="tab" data-tab="news">ข่าวสาร <span id="npend"></span></button></nav>
+<nav class="tabs"><button class="tab on" data-tab="games">รีวิวเกม</button><button class="tab" data-tab="comments">ความคิดเห็น <span id="rpend" class="rp"></span></button><button class="tab" data-tab="users">สมาชิก</button><button class="tab" data-tab="news">ข่าวสาร <span id="npend"></span></button></nav>
 <span class="sp"></span>
 <span class="who" id="who"></span>
 <a class="btn sm" href="./" target="_blank" rel="noopener">ดูหน้าเว็บ</a>
@@ -160,6 +169,7 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <div class="list" id="glist"></div>
 </section>
 <section id="tab-comments" class="hide">
+<div id="rbox"></div>
 <div class="tool"><h2>ความคิดเห็นล่าสุด <small class="mu" id="ccount"></small></h2><input id="cq" type="search" placeholder="ค้นหาข้อความ / ชื่อ / เกม..."></div>
 <div class="list" id="clist"></div>
 </section>
@@ -251,6 +261,7 @@ async function start(){
   show('app');$('#who').textContent='ผู้ใช้: '+session.user;
   await Promise.all([loadGames(),loadComments()]).catch(()=>{});
   api('/api/admin/news?status=pending').then(d=>{$('#npend').textContent=d.counts.pending?`(${d.counts.pending})`:'';}).catch(()=>{});
+  loadReports();
 }
 
 // ---------- tabs ----------
@@ -373,14 +384,33 @@ $('#ef').onsubmit=async e=>{
 
 // ---------- comments ----------
 async function loadComments(){
+  loadReports();
   try{comments=await api('/api/admin/comments');renderComments();}
   catch(e){if(e.message!=='unauthorized')$('#clist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;throw e;}
 }
+// ---------- ความคิดเห็นที่ถูกรายงาน (ขึ้นก่อน ให้ตรวจง่าย) ----------
+let reports=[];
+async function loadReports(){
+  try{reports=await api('/api/admin/reports');}catch(_){return;}
+  $('#rpend').textContent=reports.length?reports.length:'';
+  $('#rbox').innerHTML=reports.length?`<div class="rbox"><h3>ถูกรายงาน รอตรวจ (${reports.length})</h3><p class="mu">สมาชิกแจ้งว่าความคิดเห็นเหล่านี้ไม่เหมาะสม ลบทิ้ง หรือกด "ไม่เป็นไร" ถ้าเห็นว่าไม่ผิด</p>
+${reports.map(r=>`<div class="cm rep"><div><div class="meta"><b>${esc(r.name)}</b>${r.username?' @'+esc(r.username):''} · ${esc(r.gameTitle)} · ${new Date(r.date).toLocaleString('th-TH')}</div><p>${esc(r.text)}</p>
+<div class="why">ถูกรายงาน <b>${r.count}</b> ครั้ง: ${Object.entries(r.reasons).map(([k,n])=>`${esc(k)} ${n}`).join(', ')} · โดย ${r.by.map(x=>'@'+esc(x)).join(', ')}</div></div>
+<div class="rbtn"><button class="btn sm" data-rok="${esc(r.id)}">ไม่เป็นไร</button><button class="btn sm dan" data-cdel="${esc(r.id)}">ลบ</button></div></div>`).join('')}</div>`:'';
+}
+$('#rbox').onclick=async e=>{
+  const ok=e.target.closest('[data-rok]');
+  if(ok){ok.disabled=true;try{await api('/api/admin/reports/'+encodeURIComponent(ok.dataset.rok)+'/dismiss',{method:'POST'});toast('เก็บความคิดเห็นนี้ไว้ และล้างรายงานแล้ว');loadReports();renderComments();}catch(err){ok.disabled=false;if(err.message!=='unauthorized')alert(err.message);}return;}
+  const d=e.target.closest('[data-cdel]');
+  if(d){if(!confirm('ลบความคิดเห็นนี้? กู้คืนไม่ได้'))return;d.disabled=true;
+    try{await api('/api/comments/'+encodeURIComponent(d.dataset.cdel),{method:'DELETE'});comments=comments.filter(c=>c.id!==d.dataset.cdel);renderComments();loadReports();toast('ลบความคิดเห็นแล้ว');}
+    catch(err){d.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}}
+};
 function renderComments(){
   const q=$('#cq').value.trim().toLowerCase();
   const a=comments.filter(c=>!q||`${c.name} ${c.text} ${c.gameTitle}`.toLowerCase().includes(q));
   $('#ccount').textContent=`(${comments.length})`;
-  $('#clist').innerHTML=a.length?a.map(c=>`<div class="cm"><div><div class="meta"><b>${esc(c.name)}</b>${c.userId?' (สมาชิก)':' (ผู้เยี่ยมชม)'} · ${esc(c.gameTitle)} · ${new Date(c.date).toLocaleString('th-TH')}</div><p>${esc(c.text)}</p></div><button class="btn sm dan" data-cdel="${esc(c.id)}">ลบ</button></div>`).join('')
+  $('#clist').innerHTML=a.length?a.map(c=>`<div class="cm"><div><div class="meta"><b>${esc(c.name)}</b>${c.userId?' (สมาชิก)':' (ผู้เยี่ยมชม)'} · ${esc(c.gameTitle)} · ${new Date(c.date).toLocaleString('th-TH')}${reports.some(r=>r.id===c.id)?' · <span class="flag">ถูกรายงาน</span>':''}</div><p>${esc(c.text)}</p></div><button class="btn sm dan" data-cdel="${esc(c.id)}">ลบ</button></div>`).join('')
   :'<div class="empty">ไม่มีความคิดเห็น</div>';
 }
 $('#cq').oninput=renderComments;
@@ -389,7 +419,7 @@ $('#clist').onclick=async e=>{
   if(!confirm('ลบความคิดเห็นนี้? กู้คืนไม่ได้'))return;
   b.disabled=true;
   try{await api('/api/comments/'+encodeURIComponent(b.dataset.cdel),{method:'DELETE'});
-    comments=comments.filter(c=>c.id!==b.dataset.cdel);renderComments();toast('ลบความคิดเห็นแล้ว');}
+    comments=comments.filter(c=>c.id!==b.dataset.cdel);renderComments();loadReports();toast('ลบความคิดเห็นแล้ว');}
   catch(err){b.disabled=false;if(err.message!=='unauthorized')alert('ลบไม่สำเร็จ: '+err.message);}
 };
 
@@ -404,11 +434,23 @@ function renderUsers(){
   const q=$('#uq').value.trim().toLowerCase();
   const a=users.filter(u=>!q||`${u.username} ${u.name}`.toLowerCase().includes(q));
   $('#ucount').textContent=`(${users.length})`;
-  $('#ulist').innerHTML=a.length?a.map(u=>`<div class="cm"><div><div class="meta"><b>${esc(u.name)}</b> · @${esc(u.username)}</div><p class="mu">สมัครเมื่อ ${u.created?new Date(u.created).toLocaleString('th-TH'):'-'} · ความคิดเห็น ${u.comments}</p></div><button class="btn sm dan" data-udel="${u.id}">ลบสมาชิก</button></div>`).join('')
+  $('#ulist').innerHTML=a.length?a.map(u=>`<div class="cm"><div><div class="meta"><b>${esc(u.name)}</b> · @${esc(u.username)}</div><p class="mu">สมัครเมื่อ ${u.created?new Date(u.created).toLocaleString('th-TH'):'-'} · ความคิดเห็น ${u.comments}</p><div class="tmp" id="tmp-${u.id}" hidden></div></div><div class="rbtn"><button class="btn sm" data-reset="${u.id}" title="สำหรับสมาชิกที่ลืมรหัสผ่าน">รีเซ็ตรหัสผ่าน</button><button class="btn sm dan" data-udel="${u.id}">ลบสมาชิก</button></div></div>`).join('')
   :`<div class="empty">${users.length?'ไม่พบสมาชิกที่ค้นหา':'ยังไม่มีสมาชิก'}</div>`;
 }
 $('#uq').oninput=renderUsers;
 $('#ulist').onclick=async e=>{
+  const rs=e.target.closest('[data-reset]');
+  if(rs){const u=users.find(x=>x.id===+rs.dataset.reset);
+    if(!confirm(`รีเซ็ตรหัสผ่านของ “${u.name}” (@${u.username}) ?\nระบบจะสร้างรหัสผ่านชั่วคราวให้ ส่งให้สมาชิกทางช่องทางที่ยืนยันตัวตนได้ แล้วให้เขาเปลี่ยนเองที่หน้าเปลี่ยนรหัสผ่าน\nเครื่องที่ล็อกอินบัญชีนี้อยู่จะออกจากระบบทันที`))return;
+    rs.disabled=true;
+    try{const d=await api('/api/admin/users/'+u.id+'/reset-password',{method:'POST'});
+      const box=$('#tmp-'+u.id);box.hidden=false;
+      box.innerHTML=`รหัสผ่านชั่วคราวของ @${esc(d.username)}: <code>${esc(d.password)}</code> <button class="btn sm" data-copy="${esc(d.password)}">คัดลอก</button><br><small>แสดงครั้งเดียว ปิดหน้านี้แล้วจะดูอีกไม่ได้</small>`;}
+    catch(err){if(err.message!=='unauthorized')alert('รีเซ็ตไม่สำเร็จ: '+err.message);}
+    finally{rs.disabled=false;}
+    return;}
+  const cp=e.target.closest('[data-copy]');
+  if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast('คัดลอกรหัสผ่านชั่วคราวแล้ว');}catch(_){prompt('คัดลอกรหัสนี้',cp.dataset.copy);}return;}
   const b=e.target.closest('[data-udel]');if(!b)return;
   const u=users.find(x=>x.id===+b.dataset.udel);
   if(!confirm(`ลบสมาชิก “${u.name}” (@${u.username}) ?\nความคิดเห็นทั้งหมดของสมาชิกคนนี้ (${u.comments}) จะถูกลบด้วย และกู้คืนไม่ได้`))return;

@@ -14,8 +14,12 @@ const profileOf = (u) => {
     banner: BANNERS.includes(p.banner) || IMG.test(p.banner || "") ? p.banner : "duffy",
     accent: ACCENTS.includes(p.accent) ? p.accent : ACCENTS[0],
     favs: Array.isArray(p.favs) ? p.favs.filter(Number.isInteger).slice(0, 3) : [],
+    wish: Array.isArray(p.wish) ? p.wish.filter(Number.isInteger).slice(0, WISH_MAX) : [],
   };
 };
+const WISH_MAX = 200;
+// เวอร์ชันรหัสผ่านในโทเคน: เปลี่ยนรหัสผ่านแล้วโทเคนเก่าทุกอันใช้ไม่ได้ทันที
+const pv = (u) => require("crypto").createHash("sha256").update(String(u.passwordHash)).digest("hex").slice(0, 12);
 const pub = (u) => ({ id: u.id, username: u.username, name: u.name, ...profileOf(u) });
 const findUser = (id) => state.users.find((u) => u.id === id);
 
@@ -46,7 +50,8 @@ auth.hashPassword("dummy-password").then((h) => { dummyHash = h; });
 function memberFrom(req) {
   const d = auth.verify(auth.bearer(req));
   if (!d || d.r !== "member") return null;
-  return findUser(d.uid) || null;
+  const u = findUser(d.uid);
+  return u && d.pv === pv(u) ? u : null;
 }
 
 function requireMember(req, res, next) {
@@ -60,7 +65,12 @@ function requireMember(req, res, next) {
 const regHits = new Map();
 setInterval(() => { const now = Date.now(); for (const [k, a] of regHits) if (!a.some((t) => now - t < 3600000)) regHits.delete(k); }, 600000).unref();
 
-const issue = (u) => ({ token: auth.sign({ r: "member", uid: u.id }, auth.MEMBER_TTL), user: pub(u) });
+const issue = (u) => ({ token: auth.sign({ r: "member", uid: u.id, pv: pv(u) }, auth.MEMBER_TTL), user: pub(u) });
+// รหัสผ่านชั่วคราวที่ admin ออกให้ (ตัดตัวที่สับสนง่าย เช่น 0/O, 1/l ออก)
+function tempPassword() {
+  const abc = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789", b = require("crypto").randomBytes(10);
+  return [...b].map((x) => abc[x % abc.length]).join("");
+}
 
 // ตรวจชื่อผู้ใช้ซ้ำระหว่างพิมพ์ในหน้าสมัคร (จำกัด 60 ครั้ง/นาที/IP)
 const checkHits = new Map();
@@ -138,23 +148,50 @@ function register(app) {
     favs = [...new Set(favs.map(Number))];
     if (!favs.every((id) => state.games.some((g) => g.id === id))) return bad("ไม่พบเกมที่เลือก", "favs");
     try {
-      await store.updateUser(u.id, { name, profile: { bio, avatar, banner, accent, favs } });
+      await store.updateUser(u.id, { name, profile: { ...(u.profile || {}), bio, avatar, banner, accent, favs } });
       res.json({ user: pub(findUser(u.id)) });
     } catch (e) { console.error("profile save failed:", e.message); res.status(500).json({ error: "บันทึกไม่สำเร็จ กรุณาลองใหม่" }); }
   });
 
-  // ดูโปรไฟล์ของสมาชิก (ต้องล็อกอิน) พร้อมสถิติ ป้าย เกมโปรด และความคิดเห็นล่าสุด
+  // เปลี่ยนรหัสผ่านตัวเอง (ต้องใส่รหัสเดิม) แล้วออกโทเคนใหม่ให้ เครื่องอื่นที่ล็อกอินค้างไว้จะหลุดทันที
+  app.put("/api/auth/password", requireMember, async (req, res) => {
+    const u = req.member, b = req.body || {};
+    const current = String(b.current || ""), password = String(b.password || "");
+    const key = "pw:" + u.id;
+    if (auth.locked(key)) return res.status(429).json({ error: "ใส่รหัสผ่านเดิมผิดหลายครั้ง กรุณารอ 15 นาที" });
+    if (!(await auth.checkPassword(current, u.passwordHash))) { auth.addFail(key); return res.status(400).json({ error: "รหัสผ่านเดิมไม่ถูกต้อง", field: "current" }); }
+    auth.clearFail(key);
+    if (password.length < 8 || password.length > 100) return res.status(400).json({ error: "รหัสผ่านใหม่ต้องยาว 8–100 ตัวอักษร", field: "password" });
+    if (password.toLowerCase() === u.username) return res.status(400).json({ error: "รหัสผ่านต้องไม่เหมือนชื่อผู้ใช้", field: "password" });
+    if (password === current) return res.status(400).json({ error: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม", field: "password" });
+    try { await store.setPassword(u.id, await auth.hashPassword(password)); res.json(issue(findUser(u.id))); }
+    catch (e) { console.error("password change failed:", e.message); res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาลองใหม่" }); }
+  });
+
+  // รายการเกมที่อยากเล่น: { gameId, on: true/false }
+  app.post("/api/auth/wishlist", requireMember, async (req, res) => {
+    const u = req.member, id = Number((req.body || {}).gameId), on = !!(req.body || {}).on;
+    if (!state.games.some((g) => g.id === id)) return res.status(404).json({ error: "ไม่พบเกมนี้" });
+    const p = profileOf(u);
+    let wish = p.wish.filter((x) => x !== id);
+    if (on) { if (wish.length >= WISH_MAX) return res.status(400).json({ error: `เก็บได้ไม่เกิน ${WISH_MAX} เกม` }); wish = [id, ...wish]; }
+    try { await store.updateUser(u.id, { name: u.name, profile: { ...(u.profile || {}), wish } }); res.json({ wish }); }
+    catch (e) { console.error("wishlist save failed:", e.message); res.status(500).json({ error: "บันทึกไม่สำเร็จ กรุณาลองใหม่" }); }
+  });
+
+  // ดูโปรไฟล์ของสมาชิก พร้อมสถิติ ป้าย เกมโปรด เกมที่อยากเล่น และความคิดเห็นล่าสุด
   app.get("/api/users/:username", (req, res) => {
     const u = byName(String(req.params.username || "").toLowerCase());
     if (!u) return res.status(404).json({ error: "ไม่พบสมาชิกนี้" });
     const p = profileOf(u);
     const games = Object.fromEntries(state.games.map((g) => [g.id, g]));
     const mine = state.comments.filter((c) => c.userId === u.id).sort((a, b) => b.date.localeCompare(a.date));
-    const favs = p.favs.map((id) => games[id]).filter(Boolean)
-      .map((g) => ({ id: g.id, title: g.title, category: g.category, image: g.image || "", hue: g.hue, score: g.score, age: g.age }));
+    const card = (g) => ({ id: g.id, title: g.title, category: g.category, image: g.image || "", hue: g.hue, score: g.score, age: g.age });
+    const favs = p.favs.map((id) => games[id]).filter(Boolean).map(card);
+    const wish = p.wish.map((id) => games[id]).filter(Boolean).map(card);
     const me = memberFrom(req);
     res.json({
-      user: { username: u.username, name: u.name, created: u.created, ...p, favs },
+      user: { username: u.username, name: u.name, created: u.created, ...p, favs, wish },
       stats: { comments: mine.length, games: new Set(mine.map((c) => c.gameId)).size },
       badges: badgesOf(u, mine.length, favs.length),
       recent: mine.slice(0, 8).map((c) => ({ id: c.id, gameId: c.gameId, gameTitle: (games[c.gameId] || {}).title || "-", text: c.text, date: c.date })),
@@ -168,6 +205,15 @@ function register(app) {
     state.comments.forEach((c) => { if (c.userId) n[c.userId] = (n[c.userId] || 0) + 1; });
     res.json(state.users.map((u) => ({ ...pub(u), created: u.created, comments: n[u.id] || 0 }))
       .sort((a, b) => String(b.created).localeCompare(String(a.created))));
+  });
+
+  // admin รีเซ็ตรหัสผ่านให้สมาชิกที่ลืมรหัส: ได้รหัสชั่วคราวแสดงครั้งเดียว ให้สมาชิกไปเปลี่ยนเองในหน้าโปรไฟล์
+  app.post("/api/admin/users/:id/reset-password", auth.requireAdmin, async (req, res) => {
+    const u = findUser(Number(req.params.id));
+    if (!u) return res.status(404).json({ error: "ไม่พบสมาชิกนี้" });
+    const password = tempPassword();
+    try { await store.setPassword(u.id, await auth.hashPassword(password)); res.json({ username: u.username, password }); }
+    catch (e) { console.error("reset password failed:", e.message); res.status(500).json({ error: "รีเซ็ตไม่สำเร็จ: " + e.message }); }
   });
 
   // ลบสมาชิก พร้อมความคิดเห็นทั้งหมดของสมาชิกคนนั้น (โทเคนเดิมจะใช้ไม่ได้ทันที)

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Duffy Review | รีวิวเกม คะแนน และความคุ้มค่าก่อนซื้อ</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script>/* ยังไม่ได้เข้าสู่ระบบ -> ไปหน้าเข้าสู่ระบบทันที (ก่อนหน้าเว็บแสดง) */try{if(!localStorage.getItem('duffy-member')&&!localStorage.getItem('duffy-admin'))location.replace('login.html?next='+encodeURIComponent(location.pathname+location.hash));}catch(_){}</script>
+<script>/* ยังไม่ได้เข้าสู่ระบบ -> ไปหน้าเข้าสู่ระบบทันที (ก่อนหน้าเว็บแสดง) แล้วกลับมาหน้าเดิม เช่นลิงก์รีวิวที่เพื่อนแชร์มา */try{if(!localStorage.getItem('duffy-member')&&!localStorage.getItem('duffy-admin'))location.replace('login.html?next='+encodeURIComponent(location.pathname+location.search+location.hash));}catch(_){}</script>
 <script>/* โหมดสว่าง/มืดที่เคยเลือกไว้ */try{const t=localStorage.getItem('duffy-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
@@ -72,7 +72,13 @@ const I={
   out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg>',
   sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+  mark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M6 3.5h12a1 1 0 0 1 1 1V21l-7-4.5L5 21V4.5a1 1 0 0 1 1-1z"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.8 7.4-4.3M8.3 13.2l7.4 4.3"/></svg>',
+  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
 };
+// แจ้งเตือนเล็กๆ ด้านล่างจอ
+function toast(t){let el=$('#toast');if(!el){el=document.createElement('div');el.id='toast';el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);}el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2600);}
+const loginHref=()=>'login.html?next='+encodeURIComponent(location.pathname+location.search+location.hash);
 
 /* ---------- โหมดสว่าง/มืด ---------- */
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches;};
@@ -91,6 +97,25 @@ function storeInfo(g){
   return {href:'https://store.steampowered.com/search/?term='+encodeURIComponent(g.title),label:'ค้นหาราคาบน Steam',note:'ค้นหาชื่อเกมนี้บน Steam'};
 }
 const storeBtn=(g,cls)=>{const s=storeInfo(g);return `<a class="btn ${cls}" href="${esc(s.href)}" target="_blank" rel="noopener noreferrer" title="${esc(s.note)}">${I.ext}${esc(s.label)}</a>`;};
+/* ---------- อยากเล่น ---------- */
+const wished=id=>!!(ME&&(ME.wish||[]).includes(id));
+const wlBtn=g=>`<button class="wl ${wished(g.id)?'on':''}" data-wl="${g.id}" aria-pressed="${wished(g.id)}" aria-label="${wished(g.id)?'เอาออกจาก':'เพิ่มใน'}รายการอยากเล่น" title="${wished(g.id)?'อยู่ในรายการอยากเล่นแล้ว':'เก็บไว้ในรายการอยากเล่น'}">${I.mark}</button>`;
+async function toggleWish(id){
+  if(!ME){toast(ADMIN?'ต้องใช้บัญชีสมาชิกเพื่อเก็บเกมไว้ในรายการอยากเล่น':'เข้าสู่ระบบก่อนเพื่อเก็บเกมไว้ในรายการอยากเล่น');return;}
+  const on=!wished(id);
+  ME.wish=on?[id,...(ME.wish||[]).filter(x=>x!==id)]:(ME.wish||[]).filter(x=>x!==id);paintWish(id);
+  try{const r=await fetch(`${API}/api/auth/wishlist`,{method:'POST',headers:hdr(),body:JSON.stringify({gameId:id,on})});const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);ME.wish=d.wish;
+    toast(on?'เพิ่มในรายการอยากเล่นแล้ว ดูได้ที่หน้าโปรไฟล์':'เอาออกจากรายการอยากเล่นแล้ว');}
+  catch(e){ME.wish=on?ME.wish.filter(x=>x!==id):[id,...ME.wish];toast('บันทึกไม่สำเร็จ: '+e.message);}
+  paintWish(id);
+}
+function paintWish(id){const on=wished(id);document.querySelectorAll(`[data-wl="${id}"]`).forEach(b=>{b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.title=on?'อยู่ในรายการอยากเล่นแล้ว':'เก็บไว้ในรายการอยากเล่น';if(b.classList.contains('btn'))b.lastChild.textContent=on?'อยู่ในรายการอยากเล่น':'อยากเล่น';});}
+/* ---------- แชร์รีวิว: ลิงก์ /g/ID แปะแล้วขึ้นภาพปกและชื่อเกม ---------- */
+async function shareGame(g){
+  const url=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?`${API}/share/${g.id}`:`${location.origin}/g/${g.id}`;
+  try{if(navigator.share){await navigator.share({title:g.title+' | Duffy Review',text:`รีวิว ${g.title} คะแนน ${g.score}/10`,url});return;}}catch(e){if(e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(url);toast('คัดลอกลิงก์รีวิวแล้ว แปะส่งให้เพื่อนได้เลย');}catch(_){prompt('คัดลอกลิงก์นี้',url);}
+}
 
 /* ---------- ข้อมูล ---------- */
 const SORTS=[["new","ใหม่ล่าสุด","รีวิวล่าสุด"],["pop","ยอดนิยม","ยอดนิยมสุด"],["score","คะแนนสูงสุด","คะแนนสูงสุด"]];
@@ -100,7 +125,6 @@ const byScore=(a,b)=>b.score-a.score||b.views-a.views;
 const byNew=(a,b)=>String(b.date).localeCompare(String(a.date))||b.id-a.id;
 const byPop=(a,b)=>b.views-a.views||b.score-a.score;
 async function api(p){const r=await fetch(API+p,{headers:hdr()});if(r.status===401){toLogin();throw new Error(401);}if(!r.ok)throw new Error(r.status);return r.json();}
-
 async function loadAll(){
   try{
     const r=await api('/api/games?sort=new');
@@ -119,7 +143,7 @@ async function loadAll(){
 
 /* ---------- การ์ดเกม (แบบเว็บเดิม) ---------- */
 const card=g=>`<article class="card">
-<div class="cv" data-i="${g.id}">${art(g)}<span class="age">${g.age}+</span>${NEW_IDS.has(g.id)?'<span class="nw">ใหม่</span>':''}${ring(g.score)}</div>
+<div class="cv" data-i="${g.id}">${art(g)}<span class="age">${g.age}+</span>${NEW_IDS.has(g.id)?'<span class="nw">ใหม่</span>':''}${ring(g.score)}${wlBtn(g)}</div>
 <div class="cb"><span class="tag">${esc(g.category)}</span><h3><button data-i="${g.id}">${esc(g.title)}</button></h3><p>${esc(g.desc)}</p>
 <div class="mt"><span>${I.eye}<b class="vw" data-vw="${g.id}">${fmt(g.views)}</b></span><span>${I.chat}${g.commentCount}</span>${g.platforms?`<span class="pf" title="${esc(g.platforms)}">${I.pad}<i>${esc(g.platforms)}</i></span>`:''}</div>
 <div class="act"><button class="b1" data-i="${g.id}">อ่านรีวิว</button><button data-i="${g.id}" data-j="1">ความคิดเห็น (${g.commentCount})</button></div></div></article>`;
@@ -201,8 +225,7 @@ function detail(g){
 <div class="mbody">
 <div class="mtop"><span id="mring">${ring(g.score)}</span><div><h2>${esc(g.title)}</h2><div class="sub">รีวิวโดย Duffy Review · ${thDate(g.date)}</div></div></div>
 <div class="facts"><span><b>${esc(g.category)}</b></span>${g.platforms?`<span>${I.pad}<b>${esc(g.platforms)}</b></span>`:''}<span>${I.eye}<b class="vw" data-vw="${g.id}">${fmt(g.views)}</b> ครั้ง</span><span>${I.cal}${thDate(g.date)}</span></div>
-<div class="mbtns">${storeBtn(g,'a')}<a class="btn g" href="#cm" data-jump>${I.chat}ไปที่ความคิดเห็น</a></div>
-<div class="rv">${paras}</div>
+<div class="mbtns">${storeBtn(g,'a')}<button class="btn g wlb ${wished(g.id)?'on':''}" data-wl="${g.id}" aria-pressed="${wished(g.id)}">${I.mark}<span>${wished(g.id)?'อยู่ในรายการอยากเล่น':'อยากเล่น'}</span></button><button class="btn g" data-share>${I.share}แชร์</button><a class="btn g" href="#cm" data-jump>${I.chat}ความคิดเห็น</a></div><div class="rv">${paras}</div>
 <div class="pc"><div><h4>จุดเด่น</h4><ul>${li(g.pros)}</ul></div><div><h4>จุดด้อย</h4><ul>${li(g.cons)}</ul></div></div>
 <div class="rate"><div id="rsum">${sumHtml(g)}</div><div class="rstars" id="rstars">${[1,2,3,4,5].map(n=>`<button class="rb ${n<=(g.myRating||0)?'on':''}" data-r="${n}" aria-label="${n} ดาว">★</button>`).join('')}</div><small id="rmsg" class="mu">${g.myRating?`คะแนนของคุณ: ${g.myRating} ดาว (กดดาวอื่นเพื่อเปลี่ยน)`:'กดดาวเพื่อให้คะแนนเกมนี้'}</small></div>
 <h3 class="sec-h" id="cm">ความคิดเห็น (<span id="ccount">${g.commentCount}</span>)</h3>
@@ -213,7 +236,7 @@ ${sim.length?`<h3 class="sec-h">รีวิวหมวด${esc(g.category)}อ
 async function loadComments(id){
   try{const r=await api(`/api/games/${id}/comments`);
     const prof=c=>c.username?`profile.html?u=${encodeURIComponent(c.username)}`:'';
-    $('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt">${prof(c)?`<a href="${prof(c)}" title="ดูโปรไฟล์ ${esc(c.name)}">`:''}<span class="av${c.userId?'':' g'}"${c.accent?` style="--c:${esc(c.accent)}"`:''}>${esc(([...String(c.name)][0]||'?').toUpperCase())}${c.avatar?`<img src="${esc(imgUrl(c.avatar))}" alt="" loading="lazy">`:''}</span>${prof(c)?'</a>':''}<div>${prof(c)?`<a class="nm" href="${prof(c)}">${esc(c.name)}</a>`:`<b>${esc(c.name)}</b>`}${c.userId?'<span class="badge">สมาชิก</span>':''} <small>${thDate(c.date)}</small>${c.rating?` <small>${stars(c.rating)}</small>`:''}${ME&&c.userId===ME.id?`<button class="cdel" data-cdel="${esc(c.id)}">ลบ</button>`:''}<p>${esc(c.text)}</p></div></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย</p>';
+    $('#clist').innerHTML=r.length?r.map(c=>`<div class="cmt">${prof(c)?`<a href="${prof(c)}" title="ดูโปรไฟล์ ${esc(c.name)}">`:''}<span class="av${c.userId?'':' g'}"${c.accent?` style="--c:${esc(c.accent)}"`:''}>${esc(([...String(c.name)][0]||'?').toUpperCase())}${c.avatar?`<img src="${esc(imgUrl(c.avatar))}" alt="" loading="lazy">`:''}</span>${prof(c)?'</a>':''}<div>${prof(c)?`<a class="nm" href="${prof(c)}">${esc(c.name)}</a>`:`<b>${esc(c.name)}</b>`}${c.userId?'<span class="badge">สมาชิก</span>':''} <small>${thDate(c.date)}</small>${c.rating?` <small>${stars(c.rating)}</small>`:''}${ME&&c.userId===ME.id?`<button class="cdel" data-cdel="${esc(c.id)}">ลบ</button>`:`<button class="crep" data-rep="${esc(c.id)}" title="แจ้งความคิดเห็นที่ไม่เหมาะสมให้ทีมงานตรวจ">${I.flag}รายงาน</button>`}<p>${esc(c.text)}</p><div class="repbox" data-repbox="${esc(c.id)}" hidden></div></div></div>`).join(''):'<p class="mu">ยังไม่มีความคิดเห็น เป็นคนแรกเลย</p>';
     $('#ccount').textContent=r.length;
     const g=ALL.find(x=>x.id===id);if(g&&g.commentCount!==r.length){g.commentCount=r.length;stale=true;}
   }catch(e){$('#clist').innerHTML='<p class="mu">โหลดความคิดเห็นไม่สำเร็จ</p>';}
@@ -229,9 +252,24 @@ async function sendC(){
     loadComments(cur.id);
   }catch(e){m.textContent='ส่งไม่สำเร็จ: '+e.message;}
 }
+/* ---------- รายงานความคิดเห็น ---------- */
+const REASONS=[['spam','สแปม/โฆษณา'],['rude','หยาบคาย/ดูหมิ่น'],['spoiler','สปอยล์'],['other','อื่นๆ']];
+function openReport(cid){
+  if(!ME){toast(ADMIN?'ผู้ดูแลจัดการความคิดเห็นได้ที่หน้าผู้ดูแล':'เข้าสู่ระบบก่อนเพื่อรายงานความคิดเห็น');return;}
+  const box=document.querySelector(`[data-repbox="${CSS.escape(cid)}"]`);if(!box)return;
+  if(!box.hidden){box.hidden=true;return;}
+  box.innerHTML=`<span>รายงานเพราะ:</span>${REASONS.map(([k,l])=>`<button data-repr="${esc(cid)}" data-why="${k}">${l}</button>`).join('')}<button class="cx" data-rep="${esc(cid)}">ยกเลิก</button>`;box.hidden=false;
+}
+async function sendReport(cid,why){
+  const box=document.querySelector(`[data-repbox="${CSS.escape(cid)}"]`);
+  try{const r=await fetch(`${API}/api/comments/${encodeURIComponent(cid)}/report`,{method:'POST',headers:hdr(),body:JSON.stringify({reason:why})});const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);
+    if(box){box.innerHTML='<span class="ok">ส่งรายงานแล้ว ขอบคุณที่ช่วยดูแลชุมชน ทีมงานจะตรวจสอบโดยเร็ว</span>';}
+  }catch(e){toast('ส่งรายงานไม่สำเร็จ: '+e.message);}
+}
 const voter=()=>{try{let v=localStorage.getItem('duffy-voter');if(!v){v=(window.crypto&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9_-]/g,'');localStorage.setItem('duffy-voter',v);}return v;}catch(_){window.__v=window.__v||('t'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2));return window.__v;}};
 async function rate(n){
-  const m=$('#rmsg');m.textContent='กำลังบันทึก...';
+  const m=$('#rmsg');
+  m.textContent='กำลังบันทึก...';
   try{const r=await fetch(`${API}/api/games/${cur.id}/rate`,{method:'POST',headers:hdr(),body:JSON.stringify({voter:voter(),stars:n})});
     const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);
     Object.assign(cur,d);$('#rsum').innerHTML=sumHtml(cur);$('#mring').innerHTML=ring(cur.score);
@@ -245,14 +283,16 @@ async function openM(id,jump){
   catch(e){if(String(e.message)!=='401')alert('โหลดรีวิวไม่สำเร็จ');return;}
   $('#mb').innerHTML=detail(cur);$('#md').classList.add('show');$('#md').scrollTop=0;document.body.classList.add('lock');
   try{if($('#cn'))$('#cn').value=localStorage.getItem('duffy-name')||''}catch(_){}
-  history.replaceState(null,'','#game-'+id);
+  history.replaceState(null,'','?g='+id);
+  document.title=cur.title+' รีวิว | Duffy Review';
   await loadComments(id);
   if(jump)$('#cm').scrollIntoView({behavior:'smooth'});
 }
 function closeM(){
   if(!$('#md').classList.contains('show'))return;
   $('#md').classList.remove('show');document.body.classList.remove('lock');cur=null;
-  history.replaceState(null,'',location.pathname+location.search);
+  history.replaceState(null,'',location.pathname);
+  document.title='Duffy Review | รีวิวเกม คะแนน และความคุ้มค่าก่อนซื้อ';
   if(stale)render();
 }
 
@@ -266,6 +306,10 @@ document.onclick=e=>{
   const hd=t.closest('[data-hero]');if(hd){setHero(+hd.dataset.hero);return;}
   if(t.closest('[data-jump]')){e.preventDefault();$('#cm').scrollIntoView({behavior:'smooth'});return;}
   if(t.closest('[data-close]')||t.id==='md'){closeM();return;}
+  const wl=t.closest('[data-wl]');if(wl){e.preventDefault();e.stopPropagation();toggleWish(+wl.dataset.wl);return;}
+  if(t.closest('[data-share]')&&cur){shareGame(cur);return;}
+  const rp=t.closest('[data-rep]');if(rp){openReport(rp.dataset.rep);return;}
+  const rr=t.closest('[data-repr]');if(rr){sendReport(rr.dataset.repr,rr.dataset.why);return;}
   const c=t.closest('[data-i]');if(c){openM(+c.dataset.i,!!c.dataset.j);return;}
   if(t.closest('.send'))sendC();
   const rb=t.closest('[data-r]');if(rb)rate(+rb.dataset.r);
@@ -290,7 +334,7 @@ let leaving=false;
 function toLogin(){
   if(leaving)return;leaving=true;
   try{localStorage.removeItem(ADMIN?'duffy-admin':MKEY)}catch(_){}
-  location.replace('login.html?next='+encodeURIComponent(location.pathname+location.hash));
+  location.replace(loginHref()); // กลับมารีวิวเกมเดิมหลังล็อกอิน (ลิงก์ ?g=ID)
 }
 function renderAcct(){
   $('#acct').innerHTML=ME?`<a class="me" href="profile.html" title="โปรไฟล์ของฉัน (@${esc(ME.username)})"><span class="av" style="--c:${esc(ME.accent||'#ff6a2b')}">${esc(([...ME.name][0]||'?').toUpperCase())}${ME.avatar?`<img src="${esc(imgUrl(ME.avatar))}" alt="">`:''}</span><span class="nm">${esc(ME.name)}</span></a><button class="out" id="logoutBtn" aria-label="ออกจากระบบ" title="ออกจากระบบ">${I.out}<span class="t">ออกจากระบบ</span></button>`
@@ -311,10 +355,11 @@ async function logoutM(){
 async function loadMember(){
   if(!mtoken)return toLogin();
   try{const r=await fetch(`${API}${ADMIN?'/api/admin/me':'/api/auth/me'}`,{headers:hdr()});
-    if(r.status===401)return toLogin();
+    if(r.status===401)return toLogin(); // โทเคนหมดอายุ หรือเปลี่ยนรหัสผ่านจากเครื่องอื่น
     if(r.ok&&!ADMIN){ME=(await r.json()).user;}
   }catch(_){}
   renderAcct();if($('#cfw'))$('#cfw').innerHTML=cform();if(cur&&$('#clist'))loadComments(cur.id);
+  if(ME&&ALL.length){render();if(cur)paintWish(cur.id);}
 }
 async function delMine(b){
   if(!confirm('ลบความคิดเห็นนี้?'))return;
@@ -327,7 +372,7 @@ loadMember();
 $('#grid').innerHTML='<div class="sk"></div>'.repeat(6);
 $('#hin').innerHTML='<div><div class="kick"><i>D</i>Duffy Review</div><h1>กำลังโหลดรีวิว...</h1><p class="site">เซิร์ฟเวอร์ฟรีอาจใช้เวลาตื่นประมาณ 30–50 วินาทีในครั้งแรก</p></div>';
 render();
-loadAll();
+loadAll().then(()=>{const gq=new URLSearchParams(location.search).get('g');if(/^\d+$/.test(gq||''))openM(+gq);});
 // กล่อง "ข่าวล่าสุด" (เฉพาะข่าวที่ทีมงานอนุมัติแล้ว) รีเฟรชทุก 2 นาที
 const agoS=d=>{const s=(Date.now()-new Date(d))/1000;return s<3600?Math.max(1,Math.floor(s/60))+' นาที':s<86400?Math.floor(s/3600)+' ชม.':Math.floor(s/86400)+' วัน';};
 async function loadNewsBox(){
@@ -341,7 +386,7 @@ loadNewsBox();setInterval(loadNewsBox,120000);
 const setViews=(id,n)=>document.querySelectorAll(`[data-vw="${id}"]`).forEach(e=>e.textContent=fmt(n));
 async function refreshViews(){if(document.hidden||!ALL.length)return;try{const m=await api('/api/views');for(const id in m){setViews(id,m[id]);const g=ALL.find(x=>x.id==id);if(g)g.views=m[id];}}catch(_){}}
 setInterval(refreshViews,15000);
-const hm=location.hash.match(/^#game-(\d+)$/);if(hm)openM(+hm[1]);
+const hm=location.hash.match(/^#game-(\d+)$/);if(hm)openM(+hm[1]); // ลิงก์แบบเดิม
 </script>
 </body>
 </html>

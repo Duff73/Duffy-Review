@@ -1,1 +1,6 @@
-{ "cleanUrls": true }
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/g/:id", "destination": "https://duffy-review.onrender.com/share/:id" }
+  ]
+}

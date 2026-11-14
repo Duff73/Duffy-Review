@@ -62,6 +62,7 @@ function pgAdapter() {
     insertUser: async (u) => toUser((await pool.query("INSERT INTO users (username, name, password_hash) VALUES ($1,$2,$3) RETURNING *", [u.username, u.name, u.passwordHash])).rows[0]),
     deleteUser: async (id) => { await pool.query("DELETE FROM comments WHERE user_id = $1", [id]); await pool.query("DELETE FROM users WHERE id = $1", [id]); },
     updateUser: (id, u) => pool.query("UPDATE users SET name = $1, profile = $2 WHERE id = $3", [u.name, JSON.stringify(u.profile), id]),
+    setPassword: (id, h) => pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [h, id]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = $1", [id]),
     loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings")).rows.forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES ($1,$2,$3) ON CONFLICT (game_id, voter) DO UPDATE SET stars = EXCLUDED.stars, updated_at = now()", [g, v, s]),
@@ -139,6 +140,7 @@ function mysqlAdapter() {
     },
     deleteUser: async (id) => { await pool.query("DELETE FROM comments WHERE user_id = ?", [id]); await pool.query("DELETE FROM users WHERE id = ?", [id]); },
     updateUser: (id, u) => pool.query("UPDATE users SET name = ?, profile = ? WHERE id = ?", [u.name, JSON.stringify(u.profile), id]),
+    setPassword: (id, h) => pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [h, id]),
     deleteComment: (id) => pool.query("DELETE FROM comments WHERE id = ?", [id]),
     loadRatings: async () => { const o = {}; (await pool.query("SELECT game_id, voter, stars FROM ratings"))[0].forEach((r) => { (o[r.game_id] = o[r.game_id] || {})[r.voter] = r.stars; }); return o; },
     saveRating: (g, v, s) => pool.query("INSERT INTO ratings (game_id, voter, stars) VALUES (?,?,?) ON DUPLICATE KEY UPDATE stars = VALUES(stars)", [g, v, s]),
@@ -268,6 +270,14 @@ async function updateUser(id, { name, profile }) {
   return u;
 }
 
+// เปลี่ยนรหัสผ่าน (เก็บเป็น hash เท่านั้น)
+async function setPassword(id, passwordHash) {
+  if (db) await db.setPassword(id, passwordHash);
+  const u = state.users.find((x) => x.id === id);
+  if (u) u.passwordHash = passwordHash;
+  if (!db) fileSave();
+}
+
 // ---- ข่าวสาร (state.news มีทุกสถานะ) + การตั้งค่า ----
 async function saveNews(items) { if (db) await db.saveNews(items); else fileSave(); }
 async function setNewsStatus(ids, status) { if (!ids.length) return; if (db) await db.setNewsStatus(ids, status); else setTimeout(fileSave, 0); }
@@ -280,4 +290,4 @@ async function pruneNews(before) {
 }
 async function saveSetting(k, v) { if (db) await db.saveSetting(k, v); state.settings[k] = v; if (!db) fileSave(); }
 
-module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, saveImage, loadImage, saveNews, setNewsStatus, setNewsTh, pruneNews, saveSetting };
+module.exports = { state, kind, init, refreshGames, persistView, persistComment, persistDelete, persistRating, createGame, updateGame, removeGame, createUser, removeUser, updateUser, setPassword, saveImage, loadImage, saveNews, setNewsStatus, setNewsTh, pruneNews, saveSetting };
