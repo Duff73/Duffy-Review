@@ -83,6 +83,17 @@ main{max-width:1180px;margin:auto;padding:20px 16px 48px}
 .edb{padding:18px 20px;display:grid;gap:14px}
 .g2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .g2 .w2{grid-column:span 2}.g2 .w4{grid-column:1/-1}
+.pfw{display:grid;gap:6px}
+.pfl{font-size:13px;font-weight:500;color:var(--mu)}
+.pfs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pf{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.pf:hover{border-color:var(--ac)}
+.pf.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.pf svg{width:13px;height:13px}
+.pfadd{display:inline-flex;gap:4px;align-items:center}
+.pfadd input{width:150px;padding:6px 12px;border-radius:999px;font-size:13px}
+.pfadd button{border:1px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.pfadd button:hover{border-color:var(--ac);color:var(--ac)}
 @media(max-width:640px){.g2{grid-template-columns:1fr 1fr}}
 .pv{height:170px;border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:700;font-size:18px}
 .pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -194,12 +205,14 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 <div class="pv" id="pv"></div>
 <div class="g2">
 <label class="w2">ชื่อเกม *<input name="title" maxlength="200" required></label>
-<label>หมวดหมู่ *<input name="category" maxlength="50" list="cats" required></label>
+<label>หมวดหมู่ *<select name="catSel" id="catSel" aria-label="เลือกหมวดหมู่"></select><input name="category" id="catNew" maxlength="50" placeholder="พิมพ์ชื่อหมวดใหม่ เช่น แข่งรถ" hidden></label>
 <label>เรตอายุ *<select name="age"><option value="3">3+ ทุกวัย</option><option value="7">7+</option><option value="12">12+</option><option value="16">16+</option><option value="18">18+</option></select></label>
 <label>คะแนนทีมงาน (0–10) *<input name="score" type="number" min="0" max="10" step="0.1" required></label>
 <label>วันที่ลงรีวิว<input name="date" type="date"></label>
-<label>แพลตฟอร์ม<input name="platforms" maxlength="200" placeholder="PS5 · PC"></label>
-<label>ยอดวิวตั้งต้น<input name="views" type="number" min="0" step="1"></label>
+<label class="w2">ยอดวิวตั้งต้น<input name="views" type="number" min="0" step="1"></label>
+<div class="w4 pfw"><span class="pfl">แพลตฟอร์ม <small>กดเลือกได้หลายเครื่อง</small></span>
+<div class="pfs" id="pfs" role="group" aria-label="เลือกแพลตฟอร์ม"></div>
+<input name="platforms" type="hidden"></div>
 <div class="w4" style="display:grid;gap:4px"><label for="f-image">รูปปก <small>กดอัปโหลด หรือลากไฟล์รูปมาวางบนภาพตัวอย่างด้านบน (แนะนำ 16:9) / ใส่ลิงก์ https://... ก็ได้</small></label>
 <div class="imgrow"><input id="f-image" name="image" maxlength="500" placeholder="อัปโหลดรูป หรือวางลิงก์รูป"><button type="button" class="btn up" id="upbtn">อัปโหลดรูป</button></div>
 <input type="file" id="upfile" accept="image/jpeg,image/png,image/webp,image/gif" hidden><span class="msg" id="upmsg"></span></div>
@@ -213,7 +226,6 @@ input[type=range]{padding:0;accent-color:var(--ac)}
 </div>
 <div class="edf"><span class="msg" id="emsg"></span><button type="button" class="btn" data-close>ยกเลิก</button><button class="btn pri" id="esave">บันทึก</button></div>
 </form></div>
-<datalist id="cats"></datalist>
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
@@ -279,8 +291,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 // ---------- games ----------
 async function loadGames(){
   $('#glist').innerHTML='<div class="empty">กำลังโหลด...</div>';
-  try{games=await api('/api/admin/games');renderGames();
-    $('#cats').innerHTML=[...new Set(games.map(g=>g.category))].map(c=>`<option value="${esc(c)}">`).join('');}
+  try{games=await api('/api/admin/games');renderGames();}
   catch(e){if(e.message!=='unauthorized')$('#glist').innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;}
 }
 function renderGames(){
@@ -306,12 +317,54 @@ $('#glist').onclick=async e=>{
 
 // ---------- editor ----------
 const F=n=>$('#ef').elements[n];
+// หมวดหมู่: เลือกจาก drop down (หมวดที่มีในเว็บ เรียงตามจำนวนเกม) หรือเลือก "+ เพิ่มหมวดใหม่" แล้วพิมพ์เอง
+const NEWCAT='__new';
+function fillCats(cur){
+  const n={};games.forEach(g=>{n[g.category]=(n[g.category]||0)+1;});
+  const list=Object.keys(n).sort((a,b)=>n[b]-n[a]||a.localeCompare(b,'th'));
+  const sel=$('#catSel'),inp=$('#catNew'),isNew=!!cur&&!list.includes(cur);
+  sel.innerHTML=`<option value="">เลือกหมวดหมู่</option>${list.map(c=>`<option value="${esc(c)}">${esc(c)} (${n[c]} เกม)</option>`).join('')}<option value="${NEWCAT}">+ เพิ่มหมวดใหม่...</option>`;
+  sel.value=isNew?NEWCAT:(cur||'');inp.hidden=!isNew;inp.value=cur||'';
+}
+// แพลตฟอร์ม: กดเลือกได้หลายเครื่อง เก็บเป็นข้อความ "PC · PS5" แบบเดิม (หน้าเว็บแสดงเหมือนเดิม)
+const PF_BASE=['PC','PS5','PS4','Xbox','Switch','มือถือ'];
+const pfSplit=s=>String(s||'').split(/\s*[·,\/|]\s*/).map(x=>x.trim()).filter(Boolean);
+let pfAll=[],pfOn=[];
+function fillPf(cur){
+  pfOn=[...new Set(pfSplit(cur))];
+  pfAll=[...new Set([...PF_BASE,...games.flatMap(g=>pfSplit(g.platforms)),...pfOn])];
+  paintPf();
+}
+function paintPf(){
+  F('platforms').value=pfAll.filter(p=>pfOn.includes(p)).join(' · ');
+  $('#pfs').innerHTML=pfAll.map(p=>{const on=pfOn.includes(p);return `<button type="button" class="pf ${on?'on':''}" data-pf="${esc(p)}" aria-pressed="${on}">${on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>':''}${esc(p)}</button>`;}).join('')
+    +`<span class="pfadd"><input id="pfNew" maxlength="30" placeholder="+ เพิ่มเครื่องอื่น" aria-label="เพิ่มแพลตฟอร์มอื่น"><button type="button" id="pfAddBtn">เพิ่ม</button></span>`;
+}
+function addPf(){
+  const v=$('#pfNew').value.trim().replace(/[·,\/|]/g,'').slice(0,30);if(!v)return;
+  const hit=pfAll.find(p=>p.toLowerCase()===v.toLowerCase())||v;
+  if(!pfAll.includes(hit))pfAll.push(hit);if(!pfOn.includes(hit))pfOn.push(hit);
+  dirty=true;paintPf();$('#pfNew').focus();
+}
+$('#pfs').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pf]');
+  if(b){const p=b.dataset.pf;pfOn=pfOn.includes(p)?pfOn.filter(x=>x!==p):[...pfOn,p];dirty=true;paintPf();return;}
+  if(e.target.id==='pfAddBtn')addPf();
+});
+$('#pfs').addEventListener('keydown',e=>{if(e.target.id==='pfNew'&&e.key==='Enter'){e.preventDefault();addPf();}});
+$('#catSel').addEventListener('change',()=>{
+  const sel=$('#catSel'),inp=$('#catNew');
+  if(sel.value===NEWCAT){inp.hidden=false;inp.value='';inp.focus();}
+  else{inp.hidden=true;inp.value=sel.value;}
+  dirty=true;
+});
 function openEd(g){
   editing=g||null;
   $('#etitle').textContent=g?'แก้ไขรีวิว':'เพิ่มรีวิวใหม่';
   const v=g?{...g,score:g.editorScore,pros:(g.pros||[]).join('\n'),cons:(g.cons||[]).join('\n')}
     :{title:'',category:'',age:12,score:8,date:today(),platforms:'',views:0,image:'',link:'',hue:Math.floor(Math.random()*360),desc:'',review:'',pros:'',cons:''};
   for(const k of ['title','category','age','score','date','platforms','views','image','link','hue','desc','review','pros','cons'])F(k).value=v[k]??'';
+  fillCats(v.category);fillPf(v.platforms);
   $('#emsg').textContent='';$('#emsg').className='msg';$('#upmsg').textContent='';dirty=false;preview();
   $('#md').classList.add('show');document.body.style.overflow='hidden';setTimeout(()=>F('title').focus(),0);
 }
@@ -373,7 +426,7 @@ $('#ef').onsubmit=async e=>{
   const m=$('#emsg'),b=$('#esave');
   const body={};for(const k of ['title','category','age','score','date','platforms','views','image','link','hue','desc','review','pros','cons'])body[k]=F(k).value;
   if(!body.title.trim()){m.className='msg er';m.textContent='กรุณาใส่ชื่อเกม';F('title').focus();return;}
-  if(!body.category.trim()){m.className='msg er';m.textContent='กรุณาใส่หมวดหมู่';F('category').focus();return;}
+  if(!body.category.trim()){m.className='msg er';m.textContent=$('#catSel').value===NEWCAT?'กรุณาพิมพ์ชื่อหมวดใหม่':'กรุณาเลือกหมวดหมู่';($('#catNew').hidden?$('#catSel'):$('#catNew')).focus();return;}
   b.disabled=true;m.className='msg';m.textContent='กำลังบันทึก...';
   try{
     const g=editing?await api('/api/admin/games/'+editing.id,{method:'PUT',body}):await api('/api/admin/games',{method:'POST',body});
